@@ -172,9 +172,11 @@ export function AppShell() {
         if (!ti.str.trim()) continue;
         const [, , , d, tx, ty] = ti.transform;
         const [vpx, vpy] = viewport.convertToViewportPoint(tx, ty);
-        const h = Math.max(Math.abs(ti.height) * zoom, 8);
-        const w = Math.max(ti.width * widthScale, 10);
         const fontSize = Math.max(Math.abs(d) * zoom, 6);
+        // Prefer ti.height; fall back to font size when zero (common in many PDFs)
+        const rawH = Math.abs(ti.height);
+        const h = Math.max(rawH > 0 ? rawH * zoom : fontSize * 1.2, 8);
+        const w = Math.max(ti.width * widthScale, 10);
         posItems.push({ str: ti.str, left: vpx, top: vpy - h, w, h, fontSize });
       }
 
@@ -199,20 +201,22 @@ export function AppShell() {
       }
 
       if (posItems.length > 0) {
-        // Group into lines (items within 4px vertically)
+        // Group into lines — tolerance is relative to item height to handle varying font sizes
         posItems.sort((a, b) => a.top - b.top);
         const lines: PosItem[][] = [];
         for (const item of posItems) {
           const last = lines[lines.length - 1];
-          if (last && Math.abs(item.top - last[0].top) < 4) {
+          const tolerance = Math.max(item.h * 0.25, 3);
+          if (last && Math.abs(item.top - last[0].top) < tolerance) {
             last.push(item);
           } else {
             lines.push([item]);
           }
         }
 
-        // Within each line, sort by x and merge horizontally adjacent items
+        // Within each line, sort by x and merge only tightly adjacent items (kerning/spacing)
         const fabricObjects: object[] = [];
+        const COVER_PAD = 2; // px padding on cover rects to ensure full PDF text coverage
         for (const line of lines) {
           line.sort((a, b) => a.left - b.left);
           const groups: PosItem[][] = [];
@@ -220,7 +224,8 @@ export function AppShell() {
             const last = groups[groups.length - 1];
             if (last) {
               const prev = last[last.length - 1];
-              if (item.left - (prev.left + prev.w) < prev.fontSize * 1.5) {
+              // Only merge items that are truly adjacent (word spacing), not separate columns/sections
+              if (item.left - (prev.left + prev.w) < prev.fontSize * 0.6) {
                 last.push(item);
                 continue;
               }
@@ -238,10 +243,13 @@ export function AppShell() {
             const text = group.map((g) => g.str).join('');
             const fontSize = group[0].fontSize;
 
-            // 1. White cover rectangle — hides original text during edit AND in saved PDF
+            // 1. White cover rectangle with padding — fully hides original PDF text
             fabricObjects.push({
               type: 'Rect',
-              left, top, width: w, height: h,
+              left: left - COVER_PAD,
+              top: top - COVER_PAD,
+              width: w + COVER_PAD * 2,
+              height: h + COVER_PAD * 2,
               fill: '#ffffff',
               strokeWidth: 0,
               selectable: false, evented: false,
