@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface-base: #09090b;
+  --color-surface-raised: #18181b;
+  --color-surface-overlay: #27272a;
+  --color-surface-sunken: #3f3f46;
+
+  --color-border-subtle: #27272a;
+  --color-border-moderate: #3f3f46;
+
+  --color-text-primary: #fafafa;
+  --color-text-secondary: #a1a1aa;
+  --color-text-muted: #71717a;
+
+  --color-accent: #3b82f6;
+  --color-accent-hover: #2563eb;
+  --color-accent-dim: rgba(59, 130, 246, 0.15);
+
+  --color-danger: #ef4444;
+  --color-danger-dim: rgba(239, 68, 68, 0.15);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+  background-color: #09090b;
+  color: #fafafa;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* pdf.js text layer styles */
+.textLayer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 1;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.textLayer > span {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  border-radius: 2px;
+  transition: background-color 0.15s, outline 0.15s;
+  pointer-events: none;
+}
+
+.textLayer > span::selection {
+  background: rgba(0, 0, 255, 0.3);
+}
+
+/* fabric.js canvas container */
+.annotation-canvas-container {
+  background: transparent !important;
+}
+
+.annotation-canvas-container canvas {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  background: transparent !important;
+}
+
+/* Dark scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #18181b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
+}
+
+/* Print styles */
+@media print {
+  body { background: white !important; }
+  .no-print { display: none !important; }
+  #root { overflow: visible !important; }
+}
