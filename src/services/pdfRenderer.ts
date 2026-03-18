@@ -180,23 +180,42 @@ class PDFRendererService {
 
       // Search for matches
       const lowerFull = fullText.toLowerCase();
+      const widthScale = viewport.width / page.getViewport({ scale: 1 }).width;
       let idx = 0;
       while ((idx = lowerFull.indexOf(lowerQuery, idx)) !== -1) {
-        // Find which item contains this index
-        let matchItem: typeof items[0] | undefined;
+        // Find the index of the item that contains the match start
+        let matchItemIdx = -1;
         for (let i = items.length - 1; i >= 0; i--) {
-          if (items[i].startIndex <= idx) { matchItem = items[i]; break; }
+          if (items[i].startIndex <= idx) { matchItemIdx = i; break; }
         }
-        if (matchItem) {
+        if (matchItemIdx >= 0) {
+          const matchItem = items[matchItemIdx];
           const [, , , , tx, ty] = matchItem.transform;
-          // Convert PDF coordinates to viewport coordinates
           const pt = viewport.convertToViewportPoint(tx, ty);
-          const widthScale = viewport.width / page.getViewport({ scale: 1 }).width;
+
+          // Estimate x offset within the starting item
+          const charOffset = idx - matchItem.startIndex;
+          const xOffsetFraction = matchItem.str.length > 0 ? charOffset / matchItem.str.length : 0;
+          const xOffset = matchItem.width * widthScale * xOffsetFraction;
+
+          // Calculate match width across potentially multiple items
+          let matchWidth = 0;
+          let charsLeft = lowerQuery.length;
+          for (let i = matchItemIdx; i < items.length && charsLeft > 0; i++) {
+            const item = items[i];
+            const startInItem = i === matchItemIdx ? charOffset : 0;
+            const charsInItem = Math.min(charsLeft, item.str.length - startInItem);
+            if (item.str.length > 0) {
+              matchWidth += item.width * widthScale * (charsInItem / item.str.length);
+            }
+            charsLeft -= charsInItem;
+          }
+
           results.push({
             pageIndex: pageNum - 1,
-            x: pt[0],
+            x: pt[0] + xOffset,
             y: pt[1] - matchItem.height * scale,
-            width: matchItem.width * widthScale,
+            width: Math.max(matchWidth, 10),
             height: matchItem.height * scale,
           });
         }

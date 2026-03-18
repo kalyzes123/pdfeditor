@@ -17,6 +17,7 @@ import {
   Italic,
   Underline,
   Strikethrough,
+  Image,
 } from 'lucide-react';
 import { useUIStore } from '../../store/uiStore';
 import type { AnnotationTool } from '../../types/annotation.types';
@@ -35,6 +36,7 @@ const tools: { tool: AnnotationTool; icon: React.ReactNode; label: string; short
   { tool: 'sticky', icon: <StickyNote size={18} />, label: 'Sticky Note' },
   { tool: 'signature', icon: <PenTool size={18} />, label: 'Signature' },
   { tool: 'eraser', icon: <Eraser size={18} />, label: 'Eraser', shortcut: 'E' },
+  { tool: 'image' as AnnotationTool, icon: <Image size={18} />, label: 'Insert Image' },
 ];
 
 const presetColors = ['#000000', '#FF0000', '#0000FF', '#008000', '#FF8C00'];

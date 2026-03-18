@@ -11,7 +11,8 @@ export type AnnotationTool =
   | 'signature'
   | 'eraser'
   | 'arrow'
-  | 'stamp';
+  | 'stamp'
+  | 'image';
 
 export interface PageAnnotations {
   pageIndex: number;

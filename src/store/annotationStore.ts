@@ -8,6 +8,9 @@ interface AnnotationStore {
   savedSignatures: SignatureData[];
   history: Record<number, object[]>;
   historyIndex: Record<number, number>;
+  formHistory: Record<number, Record<string, string>[]>;
+  formHistoryIndex: Record<number, number>;
+  pageEditOrder: number[];
 
   savePageAnnotations: (pageIndex: number, fabricJSON: object) => void;
   updateFormValue: (
@@ -15,6 +18,11 @@ interface AnnotationStore {
     fieldName: string,
     value: string
   ) => void;
+  applyFormValues: (pageIndex: number, formValues: Record<string, string>) => void;
+  canUndoForm: (pageIndex: number) => boolean;
+  canRedoForm: (pageIndex: number) => boolean;
+  undoFormValues: (pageIndex: number) => Record<string, string> | null;
+  redoFormValues: (pageIndex: number) => Record<string, string> | null;
   getFormValues: () => Record<string, string>;
   addStickyNote: (note: Omit<StickyNote, 'id' | 'createdAt'>) => void;
   updateStickyNote: (id: string, content: string) => void;
@@ -24,6 +32,7 @@ interface AnnotationStore {
   canUndo: (pageIndex: number) => boolean;
   canRedo: (pageIndex: number) => boolean;
   pushHistory: (pageIndex: number, fabricJSON: object) => void;
+  globalUndo: () => { pageIndex: number; json: object } | null;
   undo: (pageIndex: number) => object | null;
   redo: (pageIndex: number) => object | null;
   remapAnnotations: (newOrder: number[]) => void;
@@ -40,6 +49,9 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
   savedSignatures: [],
   history: {},
   historyIndex: {},
+  formHistory: {},
+  formHistoryIndex: {},
+  pageEditOrder: [],
 
   savePageAnnotations: (pageIndex, fabricJSON) =>
     set((s) => ({
@@ -55,21 +67,62 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
 
   updateFormValue: (pageIndex, fieldName, value) =>
     set((s) => {
-      const existing = s.annotations[pageIndex] ?? {
-        pageIndex,
-        fabricJSON: {},
-        formValues: {},
-      };
+      const existing = s.annotations[pageIndex] ?? { pageIndex, fabricJSON: {}, formValues: {} };
+      const newFormValues = { ...existing.formValues, [fieldName]: value };
+      const pageFormHistory = s.formHistory[pageIndex] ?? [];
+      const fi = s.formHistoryIndex[pageIndex] ?? -1;
+      const trimmed = pageFormHistory.slice(0, fi + 1);
+      const updated = [...trimmed, newFormValues].slice(-30);
       return {
         annotations: {
           ...s.annotations,
-          [pageIndex]: {
-            ...existing,
-            formValues: { ...existing.formValues, [fieldName]: value },
-          },
+          [pageIndex]: { ...existing, formValues: newFormValues },
         },
+        formHistory: { ...s.formHistory, [pageIndex]: updated },
+        formHistoryIndex: { ...s.formHistoryIndex, [pageIndex]: updated.length - 1 },
       };
     }),
+
+  applyFormValues: (pageIndex, formValues) =>
+    set((s) => ({
+      annotations: {
+        ...s.annotations,
+        [pageIndex]: {
+          ...(s.annotations[pageIndex] ?? { pageIndex, fabricJSON: {}, formValues: {} }),
+          formValues,
+        },
+      },
+    })),
+
+  canUndoForm: (pageIndex) => {
+    const s = get();
+    return (s.formHistoryIndex[pageIndex] ?? -1) > 0;
+  },
+
+  canRedoForm: (pageIndex) => {
+    const s = get();
+    const fi = s.formHistoryIndex[pageIndex] ?? -1;
+    return fi < (s.formHistory[pageIndex]?.length ?? 0) - 1;
+  },
+
+  undoFormValues: (pageIndex) => {
+    const s = get();
+    const fi = s.formHistoryIndex[pageIndex] ?? -1;
+    if (fi <= 0) return null;
+    const newFi = fi - 1;
+    set({ formHistoryIndex: { ...s.formHistoryIndex, [pageIndex]: newFi } });
+    return s.formHistory[pageIndex]?.[newFi] ?? null;
+  },
+
+  redoFormValues: (pageIndex) => {
+    const s = get();
+    const fi = s.formHistoryIndex[pageIndex] ?? -1;
+    const pageFormHistory = s.formHistory[pageIndex] ?? [];
+    if (fi >= pageFormHistory.length - 1) return null;
+    const newFi = fi + 1;
+    set({ formHistoryIndex: { ...s.formHistoryIndex, [pageIndex]: newFi } });
+    return pageFormHistory[newFi] ?? null;
+  },
 
   getFormValues: () => {
     const all: Record<string, string> = {};
@@ -130,12 +183,29 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
       const updated = [...trimmed, fabricJSON].slice(-50);
       return {
         history: { ...s.history, [pageIndex]: updated },
-        historyIndex: {
-          ...s.historyIndex,
-          [pageIndex]: updated.length - 1,
-        },
+        historyIndex: { ...s.historyIndex, [pageIndex]: updated.length - 1 },
+        pageEditOrder: [...s.pageEditOrder, pageIndex].slice(-100),
       };
     }),
+
+  globalUndo: () => {
+    const s = get();
+    // Walk backward through pageEditOrder to find a page with something to undo
+    for (let i = s.pageEditOrder.length - 1; i >= 0; i--) {
+      const pi = s.pageEditOrder[i];
+      const idx = s.historyIndex[pi] ?? -1;
+      if (idx > 0) {
+        const newIdx = idx - 1;
+        set({
+          historyIndex: { ...s.historyIndex, [pi]: newIdx },
+          pageEditOrder: [...s.pageEditOrder.slice(0, i), ...s.pageEditOrder.slice(i + 1)],
+        });
+        const json = s.history[pi]?.[newIdx];
+        return json ? { pageIndex: pi, json } : null;
+      }
+    }
+    return null;
+  },
 
   undo: (pageIndex) => {
     const s = get();
@@ -171,7 +241,7 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
           };
         }
       });
-      return { annotations: newAnnotations, history: {}, historyIndex: {} };
+      return { annotations: newAnnotations, history: {}, historyIndex: {}, formHistory: {}, formHistoryIndex: {}, pageEditOrder: [] };
     }),
 
   clearPageAnnotations: (pageIndex) =>
@@ -187,5 +257,8 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
       stickyNotes: [],
       history: {},
       historyIndex: {},
+      formHistory: {},
+      formHistoryIndex: {},
+      pageEditOrder: [],
     }),
 }));

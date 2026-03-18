@@ -6,7 +6,7 @@ import { annotationManagers } from '../services/annotationRegistry';
 
 export function useKeyboardShortcuts() {
   const { currentPage, activeTool, setTool, zoomIn, zoomOut, setZoom, fitToWidth, fitToPage, scrollToPage, openFindBar } = useUIStore();
-  const { undo, redo } = useAnnotationStore();
+  const { undo, redo, canUndo, canUndoForm, undoFormValues, applyFormValues, globalUndo } = useAnnotationStore();
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -30,17 +30,30 @@ export function useKeyboardShortcuts() {
         return;
       }
 
-      // Undo: Ctrl+Z — also handles eraser undo
+      // Undo: Ctrl+Z — eraser > per-page fabric > form field > global cross-page
       if (isCmd && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
         const manager = annotationManagers.get(pageIndex);
-        // If eraser is active, undo last deletion first
-        if (activeTool === 'eraser' && manager?.undoLastDelete()) {
+        if (activeTool === 'eraser' && manager?.undoLastDelete()) return;
+
+        if (canUndo(pageIndex)) {
+          const json = undo(pageIndex);
+          if (json) manager?.loadFromJSON(json);
           return;
         }
-        const json = undo(pageIndex);
-        if (json) {
-          manager?.loadFromJSON(json);
+
+        // Try form field undo on current page
+        if (canUndoForm(pageIndex)) {
+          const prevValues = undoFormValues(pageIndex);
+          if (prevValues) applyFormValues(pageIndex, prevValues);
+          return;
+        }
+
+        // Global undo: undo on the most recently edited other page
+        const result = globalUndo();
+        if (result?.json) {
+          annotationManagers.get(result.pageIndex)?.loadFromJSON(result.json);
+          scrollToPage(result.pageIndex + 1);
         }
         return;
       }
@@ -135,5 +148,5 @@ export function useKeyboardShortcuts() {
 
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [currentPage, setTool, undo, redo, zoomIn, zoomOut, setZoom, fitToWidth, fitToPage, scrollToPage, activeTool, openFindBar]);
+  }, [currentPage, setTool, undo, redo, canUndo, canUndoForm, undoFormValues, applyFormValues, globalUndo, zoomIn, zoomOut, setZoom, fitToWidth, fitToPage, scrollToPage, activeTool, openFindBar]);
 }

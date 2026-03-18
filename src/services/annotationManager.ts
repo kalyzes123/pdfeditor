@@ -163,8 +163,7 @@ export class AnnotationManager {
         break;
 
       case 'highlight':
-        // Always use yellow for highlight, ignore user color selection
-        this.setupRectangleDraw('#FFFF00', 0.4, 0, 'transparent');
+        this.setupRectangleDraw(options.color ?? '#FFFF00', 0.4, 0, 'transparent');
         break;
 
       case 'underline':
@@ -204,6 +203,10 @@ export class AnnotationManager {
 
       case 'stamp':
         this.setupStampTool(options);
+        break;
+
+      case 'image':
+        this.setupImageTool();
         break;
     }
   }
@@ -766,6 +769,31 @@ export class AnnotationManager {
 
     this.canvas.on('mouse:down', handler);
     this.cleanupListeners.push(() => this.canvas?.off('mouse:down', handler));
+  }
+
+  private setupImageTool(): void {
+    if (!this.canvas) return;
+    this.canvas.defaultCursor = 'crosshair';
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file || !this.canvas) return;
+      const url = URL.createObjectURL(file);
+      try {
+        const img = await fabric.FabricImage.fromURL(url);
+        const maxW = this.currentWidth * 0.6;
+        if ((img.width ?? 0) > maxW) img.scale(maxW / (img.width ?? maxW));
+        img.set({ left: 50, top: 50 });
+        this.canvas.add(img);
+        this.canvas.setActiveObject(img);
+        this.canvas.renderAll();
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    };
+    input.click();
   }
 
   addSignatureImage(dataURL: string, x: number, y: number): void {
