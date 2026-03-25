@@ -20,6 +20,7 @@ interface ToolOptions {
 export class AnnotationManager {
   private canvas: fabric.Canvas | null = null;
   private onChangeCallback: (json: object) => void;
+  private onSaveOnlyCallback: ((json: object) => void) | null = null;
   private onSelectionChangeCallback: ((props: SelectedObjectProps | null) => void) | null = null;
   private cleanupListeners: (() => void)[] = [];
   private deletedStack: fabric.FabricObject[] = [];
@@ -27,6 +28,11 @@ export class AnnotationManager {
   private currentHeight = 1;
   constructor(onChange: (json: object) => void) {
     this.onChangeCallback = onChange;
+  }
+
+  /** Register a callback that saves annotations WITHOUT pushing to undo history. */
+  onSaveOnly(cb: (json: object) => void): void {
+    this.onSaveOnlyCallback = cb;
   }
 
   initialize(
@@ -1123,7 +1129,14 @@ export class AnnotationManager {
     this.currentHeight = height;
     this.canvas.setDimensions({ width, height });
     this.canvas.renderAll();
-    this.onChangeCallback(this.canvas.toJSON());
+    // Use save-only callback so zoom resize does NOT push to undo history.
+    // Falls back to onChangeCallback if no save-only callback is registered.
+    const json = this.canvas.toJSON();
+    if (this.onSaveOnlyCallback) {
+      this.onSaveOnlyCallback(json);
+    } else {
+      this.onChangeCallback(json);
+    }
   }
 
   deleteSelected(): void {

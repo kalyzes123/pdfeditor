@@ -31,6 +31,15 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
     [pageIndex, savePageAnnotations, pushHistory]
   );
 
+  // Save-only callback: persists annotations without pushing to undo history.
+  // Used by resize() so that zoom changes don't pollute the undo stack.
+  const onSaveOnly = useCallback(
+    (json: object) => {
+      savePageAnnotations(pageIndex, json);
+    },
+    [pageIndex, savePageAnnotations]
+  );
+
   // ── Effect 1: INIT — only on mount / page change ──────────────────────────
   // Never re-runs on zoom change so annotations survive zooming.
   useEffect(() => {
@@ -39,6 +48,7 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
 
     const manager = new AnnotationManager(onChange);
     manager.initialize(canvas, width, height);
+    manager.onSaveOnly(onSaveOnly);
     manager.onSelectionChange((props) => setSelectedObjectProps(props));
     managerRef.current = manager;
     annotationManagers.set(pageIndex, manager);

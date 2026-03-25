@@ -30,15 +30,19 @@ export function useKeyboardShortcuts() {
         return;
       }
 
+      const manager = annotationManagers.get(pageIndex);
+
       // Undo: Ctrl+Z — eraser > per-page fabric > form field > global cross-page
       if (isCmd && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
-        const manager = annotationManagers.get(pageIndex);
         if (activeTool === 'eraser' && manager?.undoLastDelete()) return;
 
         if (canUndo(pageIndex)) {
           const json = undo(pageIndex);
-          if (json) manager?.loadFromJSON(json);
+          if (json && manager) {
+            const { width, height } = manager.getDimensions();
+            manager.loadFromJSON(json).then(() => manager.resize(width, height));
+          }
           return;
         }
 
@@ -52,7 +56,11 @@ export function useKeyboardShortcuts() {
         // Global undo: undo on the most recently edited other page
         const result = globalUndo();
         if (result?.json) {
-          annotationManagers.get(result.pageIndex)?.loadFromJSON(result.json);
+          const targetManager = annotationManagers.get(result.pageIndex);
+          if (targetManager) {
+            const { width, height } = targetManager.getDimensions();
+            targetManager.loadFromJSON(result.json).then(() => targetManager.resize(width, height));
+          }
           scrollToPage(result.pageIndex + 1);
         }
         return;
@@ -62,8 +70,9 @@ export function useKeyboardShortcuts() {
       if (isCmd && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
         e.preventDefault();
         const json = redo(pageIndex);
-        if (json) {
-          annotationManagers.get(pageIndex)?.loadFromJSON(json);
+        if (json && manager) {
+          const { width, height } = manager.getDimensions();
+          manager.loadFromJSON(json).then(() => manager.resize(width, height));
         }
         return;
       }
@@ -114,6 +123,12 @@ export function useKeyboardShortcuts() {
         target.tagName === 'TEXTAREA' ||
         target.isContentEditable
       ) {
+        return;
+      }
+
+      // Also skip tool shortcuts when a Fabric IText is in editing mode
+      // (Fabric's hidden textarea may not always be the keydown target)
+      if (isEditingText) {
         return;
       }
 
