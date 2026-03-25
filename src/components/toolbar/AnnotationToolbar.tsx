@@ -119,7 +119,7 @@ export function AnnotationToolbar() {
                 onClick={() => setStampLabel(l)}
                 onMouseEnter={(e) => showTooltip(e, l)}
                 onMouseLeave={hideTooltip}
-                className={`w-full px-1 py-0.5 rounded text-[8px] font-bold border transition-colors text-center leading-tight ${
+                className={`w-full px-1 py-0.5 rounded text-[8px] font-bold border transition-colors text-center leading-tight truncate overflow-hidden ${
                   activeStampLabel === l
                     ? 'bg-surface-overlay border-current'
                     : 'border-surface-overlay hover:bg-surface-overlay'
