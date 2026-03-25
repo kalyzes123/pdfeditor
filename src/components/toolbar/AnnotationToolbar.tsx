@@ -136,10 +136,7 @@ export function AnnotationToolbar() {
 
       {/* Opacity slider */}
       <div className="flex flex-col gap-0.5 w-full">
-        <div className="flex items-center justify-between">
-          <span className="text-[8px] text-text-muted">Opacity</span>
-          <span className="text-[8px] text-text-muted tabular-nums">{Math.round(activeOpacity * 100)}%</span>
-        </div>
+        <span className="text-[8px] text-text-muted">Opacity: {Math.round(activeOpacity * 100)}%</span>
         <input
           type="range"
           min={0.1}
@@ -158,9 +155,10 @@ export function AnnotationToolbar() {
       {/* Custom color picker + presets */}
       <span className="text-[8px] text-text-muted self-start">Color</span>
       <div
-        className="relative w-full h-9 rounded border border-border-subtle overflow-hidden cursor-pointer"
+        className="relative w-full h-9 rounded border-2 border-border-moderate overflow-hidden cursor-pointer"
         onMouseEnter={(e) => showTooltip(e, 'Pick color')}
         onMouseLeave={hideTooltip}
+        style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.15)' }}
       >
         <div className="absolute inset-0" style={{ backgroundColor: activeColor }} />
         <input
