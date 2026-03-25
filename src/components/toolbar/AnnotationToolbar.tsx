@@ -33,8 +33,6 @@ const tools: { tool: AnnotationTool; icon: React.ReactNode; label: string; short
   { tool: 'image' as AnnotationTool, icon: <Image size={18} />, label: 'Insert Image' },
 ];
 
-const presetColors = ['#000000', '#FF0000', '#FFFF00', '#008000', '#FF8C00'];
-
 const stampLabels = ['APPROVED', 'REJECTED', 'DRAFT', 'CONFIDENTIAL', 'FOR REVIEW', 'VOID'];
 const stampColors: Record<string, string> = {
   APPROVED: '#16a34a',
@@ -48,8 +46,6 @@ const stampColors: Record<string, string> = {
 export function AnnotationToolbar() {
   const {
     activeTool, setTool,
-    activeColor, setColor,
-    activeOpacity, setOpacity,
     activeStrokeWidth, setStrokeWidth,
     activeStampLabel, setStampLabel,
     openDialog,
@@ -134,54 +130,6 @@ export function AnnotationToolbar() {
         </>
       )}
 
-      {/* Opacity slider */}
-      <div className="flex flex-col gap-0.5 w-full">
-        <span className="text-[8px] text-text-muted">Opacity: {Math.round(activeOpacity * 100)}%</span>
-        <input
-          type="range"
-          min={0.1}
-          max={1}
-          step={0.05}
-          value={activeOpacity}
-          onChange={(e) => setOpacity(Number(e.target.value))}
-          onMouseEnter={(e) => showTooltip(e, `Opacity ${Math.round(activeOpacity * 100)}%`)}
-          onMouseLeave={hideTooltip}
-          className="w-full accent-accent cursor-pointer"
-        />
-      </div>
-
-      <div className="w-full border-t border-border-subtle my-1" />
-
-      {/* Custom color picker + presets */}
-      <span className="text-[8px] text-text-muted self-start">Color</span>
-      <div
-        className="relative w-full h-9 rounded border-2 border-border-moderate overflow-hidden cursor-pointer"
-        onMouseEnter={(e) => showTooltip(e, 'Pick color')}
-        onMouseLeave={hideTooltip}
-        style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.15)' }}
-      >
-        <div className="absolute inset-0" style={{ backgroundColor: activeColor }} />
-        <input
-          type="color"
-          value={activeColor}
-          onChange={(e) => setColor(e.target.value)}
-          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-        />
-      </div>
-      <div className="grid grid-cols-5 gap-0.5 w-full">
-        {presetColors.map((color) => (
-          <button
-            key={color}
-            onClick={() => setColor(color)}
-            onMouseEnter={(e) => showTooltip(e, color)}
-            onMouseLeave={hideTooltip}
-            className={`w-full aspect-square rounded-full border-2 transition-transform ${
-              activeColor === color ? 'border-accent scale-110' : 'border-surface-sunken'
-            }`}
-            style={{ backgroundColor: color }}
-          />
-        ))}
-      </div>
 
       {/* Fixed tooltip */}
       {tooltip && (
