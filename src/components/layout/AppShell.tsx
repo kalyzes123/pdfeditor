@@ -25,7 +25,7 @@ export function AppShell() {
   const { isDocumentLoaded, loadDocument, saveDocument, closeDocument, pageCount, isModified } =
     useDocumentStore();
   const {
-    sidebarOpen, isLoading, loadingMessage, setLoading, currentPage, zoom,
+    sidebarOpen, isLoading, loadingMessage, setLoading,
     addToast, showConfirm, dismissConfirm, confirmDialog,
   } = useUIStore();
   useKeyboardShortcuts();
