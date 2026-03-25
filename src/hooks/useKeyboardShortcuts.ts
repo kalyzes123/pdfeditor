@@ -32,10 +32,9 @@ export function useKeyboardShortcuts() {
 
       const manager = annotationManagers.get(pageIndex);
 
-      // Undo: Ctrl+Z — eraser > per-page fabric > form field > global cross-page
+      // Undo: Ctrl+Z — per-page fabric > form field > global cross-page
       if (isCmd && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
-        if (activeTool === 'eraser' && manager?.undoLastDelete()) return;
 
         if (canUndo(pageIndex)) {
           const json = undo(pageIndex);
