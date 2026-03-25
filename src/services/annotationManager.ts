@@ -163,7 +163,7 @@ export class AnnotationManager {
         break;
 
       case 'highlight':
-        this.setupRectangleDraw(options.color ?? '#FFFF00', 0.4, 0, 'transparent');
+        this.setupHighlightTool(options);
         break;
 
       case 'underline':
@@ -354,6 +354,132 @@ export class AnnotationManager {
 
     this.canvas.on('mouse:down', handler);
     this.cleanupListeners.push(() => this.canvas?.off('mouse:down', handler));
+  }
+
+  // Highlight tool: drag over text → snaps to text spans per line (like Acrobat)
+  private setupHighlightTool(options: ToolOptions): void {
+    if (!this.canvas) return;
+    this.canvas.defaultCursor = 'text';
+
+    let isDown = false;
+    let startX = 0;
+    let startY = 0;
+    let preview: fabric.Rect | null = null;
+
+    const onDown = (o: fabric.TEvent) => {
+      if ((o as fabric.TEvent & { target?: fabric.FabricObject }).target) return;
+      isDown = true;
+      const p = this.canvas!.getScenePoint(o.e as MouseEvent);
+      startX = p.x;
+      startY = p.y;
+      preview = new fabric.Rect({
+        left: startX, top: startY, width: 0, height: 0,
+        fill: options.color ?? '#FFFF00', opacity: 0.35,
+        strokeWidth: 0, selectable: false, evented: false,
+      });
+      this.canvas!.add(preview);
+    };
+
+    const onMove = (o: fabric.TEvent) => {
+      if (!isDown || !preview) return;
+      const p = this.canvas!.getScenePoint(o.e as MouseEvent);
+      preview.set({
+        left: Math.min(p.x, startX), top: Math.min(p.y, startY),
+        width: Math.abs(p.x - startX), height: Math.abs(p.y - startY),
+      });
+      this.canvas!.renderAll();
+    };
+
+    const onUp = (o: fabric.TEvent) => {
+      if (!isDown) return;
+      isDown = false;
+      if (preview) { this.canvas!.remove(preview); preview = null; }
+
+      const p = this.canvas!.getScenePoint(o.e as MouseEvent);
+      const endX = p.x;
+      const endY = p.y;
+
+      const left = Math.min(startX, endX);
+      const top = Math.min(startY, endY);
+      const right = Math.max(startX, endX);
+      const bottom = Math.max(startY, endY);
+
+      if (right - left < 3 && bottom - top < 3) return; // accidental click
+
+      const canvasEl = this.canvas!.lowerCanvasEl;
+      if (!canvasEl) return;
+      const canvasRect = canvasEl.getBoundingClientRect();
+      const scaleX = canvasRect.width / (this.canvas!.width ?? 1);
+      const scaleY = canvasRect.height / (this.canvas!.height ?? 1);
+
+      // Convert fabric drag coords to screen coords for text span hit-testing
+      const sLeft = canvasRect.left + left * scaleX;
+      const sRight = canvasRect.left + right * scaleX;
+      const sTop = canvasRect.top + top * scaleY;
+      const sBottom = canvasRect.top + bottom * scaleY;
+
+      // Find the textLayer that belongs to this canvas page
+      const wrapper = canvasEl.closest('.relative');
+      const textLayer = wrapper?.querySelector('.textLayer');
+      const spans = textLayer ? Array.from(textLayer.querySelectorAll('span')) : [];
+
+      // Group overlapping spans by text line (cluster by screen Y)
+      type LineGroup = { left: number; right: number; top: number; bottom: number };
+      const lines: LineGroup[] = [];
+
+      for (const span of spans) {
+        const r = span.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) continue;
+        if (r.right < sLeft || r.left > sRight) continue;
+        if (r.bottom < sTop || r.top > sBottom) continue;
+
+        // Merge into an existing line group if Y overlaps significantly
+        const matched = lines.find(
+          (ln) => r.top < ln.bottom - 2 && r.bottom > ln.top + 2
+        );
+        if (matched) {
+          matched.left = Math.min(matched.left, r.left);
+          matched.right = Math.max(matched.right, r.right);
+          matched.top = Math.min(matched.top, r.top);
+          matched.bottom = Math.max(matched.bottom, r.bottom);
+        } else {
+          lines.push({ left: r.left, right: r.right, top: r.top, bottom: r.bottom });
+        }
+      }
+
+      if (lines.length > 0) {
+        // Create one highlight rect per text line
+        for (const ln of lines) {
+          const fx = (ln.left - canvasRect.left) / scaleX;
+          const fy = (ln.top - canvasRect.top) / scaleY;
+          const fw = (ln.right - ln.left) / scaleX;
+          const fh = (ln.bottom - ln.top) / scaleY;
+          const rect = new fabric.Rect({
+            left: fx, top: fy, width: fw, height: fh,
+            fill: options.color ?? '#FFFF00', opacity: 0.4,
+            strokeWidth: 0, selectable: true, evented: true,
+          });
+          this.canvas!.add(rect);
+        }
+      } else {
+        // No text spans found — fall back to free-form rectangle
+        const rect = new fabric.Rect({
+          left, top, width: right - left, height: bottom - top,
+          fill: options.color ?? '#FFFF00', opacity: 0.4,
+          strokeWidth: 0, selectable: true, evented: true,
+        });
+        this.canvas!.add(rect);
+      }
+    };
+
+    this.canvas.on('mouse:down', onDown);
+    this.canvas.on('mouse:move', onMove);
+    this.canvas.on('mouse:up', onUp);
+    this.cleanupListeners.push(() => {
+      this.canvas?.off('mouse:down', onDown);
+      this.canvas?.off('mouse:move', onMove);
+      this.canvas?.off('mouse:up', onUp);
+    });
   }
 
   // FIX #3: Highlight uses proper yellow fill with transparency
