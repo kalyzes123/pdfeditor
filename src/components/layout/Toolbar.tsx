@@ -11,7 +11,6 @@ import {
   Printer,
   Undo2,
   Redo2,
-  ScanText,
   RotateCcw,
   RotateCw,
 } from 'lucide-react';
@@ -25,11 +24,10 @@ import { ZoomControl } from '../toolbar/ZoomControl';
 interface ToolbarProps {
   onOpenFile: () => void;
   onSave: () => void;
-  onEditText: () => void;
   onClose: () => void;
 }
 
-export function Toolbar({ onOpenFile, onSave, onEditText, onClose }: ToolbarProps) {
+export function Toolbar({ onOpenFile, onSave, onClose }: ToolbarProps) {
   const { sidebarOpen, toggleSidebar, openDialog, currentPage, activeTool } = useUIStore();
   const { isDocumentLoaded, isModified, fileName, setFileName, rotatePage } = useDocumentStore();
   const { undo, redo, canUndo, canRedo } = useAnnotationStore();
@@ -122,16 +120,6 @@ export function Toolbar({ onOpenFile, onSave, onEditText, onClose }: ToolbarProp
               disabled={!canRedo(currentPage - 1)}
               title="Redo (Ctrl+Y)"
             />
-
-            <Button
-              icon={<ScanText size={16} />}
-              variant="ghost"
-              size="sm"
-              onClick={onEditText}
-              title="Extract existing text as editable objects (OCR fallback for scanned PDFs)"
-            >
-              Edit Text
-            </Button>
 
             <div className="w-px h-5 bg-border-subtle" />
 
