@@ -37,7 +37,7 @@ const tools: { tool: AnnotationTool; icon: React.ReactNode; label: string; short
   { tool: 'image' as AnnotationTool, icon: <Image size={18} />, label: 'Insert Image' },
 ];
 
-const presetColors = ['#000000', '#FF0000', '#0000FF', '#008000', '#FF8C00'];
+const presetColors = ['#000000', '#FF0000', '#FFFF00', '#008000', '#FF8C00'];
 
 const fontFamilies = [
   'Arial', 'Helvetica', 'Times New Roman', 'Georgia',
@@ -219,9 +219,10 @@ export function AnnotationToolbar() {
       <div className="w-10 border-t border-border-subtle my-1" />
 
       {/* Custom color picker + presets */}
+      <span className="text-[8px] text-text-muted">Color</span>
       <div className="flex flex-col items-center gap-1">
         <div
-          onMouseEnter={(e) => showTooltip(e, 'Color')}
+          onMouseEnter={(e) => showTooltip(e, 'Pick color')}
           onMouseLeave={hideTooltip}
           className="relative"
         >
