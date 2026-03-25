@@ -962,37 +962,14 @@ export class AnnotationManager {
     return results;
   }
 
-  // Export only non-text objects as PNG (shapes, freehand, images) at high res
+  // Export all annotation objects (text + shapes) as PNG at high res.
+  // Text is rasterized here to guarantee pixel-perfect positioning matching what
+  // the user sees on screen, avoiding the lossy canvas→PDF coordinate conversion
+  // that caused text to shift after saving.
   exportNonTextToPNG(): string {
     if (!this.canvas) return '';
-
-    // Temporarily hide text objects
-    const textObjects: fabric.FabricObject[] = [];
-    this.canvas.forEachObject((obj) => {
-      if (obj instanceof fabric.IText || obj instanceof fabric.Text) {
-        textObjects.push(obj);
-        obj.visible = false;
-      }
-    });
-
-    // Check if there are any non-text objects remaining
-    const hasNonText = this.canvas.getObjects().some(
-      (obj) => !(obj instanceof fabric.IText || obj instanceof fabric.Text)
-    );
-
-    let result = '';
-    if (hasNonText) {
-      // Export at 3x for HD quality on non-text elements
-      result = this.canvas.toDataURL({ format: 'png', multiplier: 3 });
-    }
-
-    // Restore text visibility
-    textObjects.forEach((obj) => {
-      obj.visible = true;
-    });
-    this.canvas.renderAll();
-
-    return result;
+    if (this.canvas.getObjects().length === 0) return '';
+    return this.canvas.toDataURL({ format: 'png', multiplier: 3 });
   }
 
   // Legacy: export everything as PNG (kept for backward compat)

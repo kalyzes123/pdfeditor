@@ -82,15 +82,14 @@ export function AppShell() {
         const manager = annotationManagers.get(i);
         if (!manager) continue;
 
-        const textAnnotations = manager.extractTextAnnotations();
         const nonTextDataURL = manager.exportNonTextToPNG();
         const { width: canvasWidth, height: canvasHeight } = manager.getDimensions();
 
-        if (textAnnotations.length > 0 || nonTextDataURL) {
+        if (nonTextDataURL) {
           pageAnnotations.push({
             pageIndex: i,
             nonTextDataURL,
-            textAnnotations,
+            textAnnotations: [],
             canvasScale: zoom,
             canvasWidth,
             canvasHeight,
@@ -117,13 +116,13 @@ export function AppShell() {
 
         const w = Math.round(pageMeta.width * zoom);
         const h = Math.round(pageMeta.height * zoom);
-        const { textAnnotations, nonTextDataURL } = await AnnotationManager.extractFromJSON(json, w, h);
+        const { nonTextDataURL } = await AnnotationManager.extractFromJSON(json, w, h);
 
-        if (textAnnotations.length > 0 || nonTextDataURL) {
+        if (nonTextDataURL) {
           pageAnnotations.push({
             pageIndex: i,
             nonTextDataURL,
-            textAnnotations,
+            textAnnotations: [],
             canvasScale: zoom,
             canvasWidth: w,
             canvasHeight: h,
