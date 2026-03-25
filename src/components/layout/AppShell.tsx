@@ -18,8 +18,6 @@ import { PropertiesPanel } from '../panels/PropertiesPanel';
 import { DropZone } from '../common/DropZone';
 import { Spinner } from '../common/Spinner';
 import { SignatureDialog } from '../dialogs/SignatureDialog';
-import { MergeDialog } from '../dialogs/MergeDialog';
-import { SplitDialog } from '../dialogs/SplitDialog';
 
 export function AppShell() {
   const { isDocumentLoaded, loadDocument, saveDocument, closeDocument, pageCount, isModified } =
@@ -205,8 +203,6 @@ export function AppShell() {
 
       {/* Dialogs */}
       <SignatureDialog />
-      <MergeDialog />
-      <SplitDialog />
 
       {/* Confirm dialog */}
       {confirmDialog && (

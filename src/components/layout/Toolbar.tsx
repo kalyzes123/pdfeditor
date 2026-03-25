@@ -4,15 +4,11 @@ import {
   Save,
   PanelLeftClose,
   PanelLeftOpen,
-  Merge,
-  Scissors,
   X,
   Pencil,
   Printer,
   Undo2,
   Redo2,
-  RotateCcw,
-  RotateCw,
 } from 'lucide-react';
 import { useUIStore } from '../../store/uiStore';
 import { useDocumentStore } from '../../store/documentStore';
@@ -28,8 +24,8 @@ interface ToolbarProps {
 }
 
 export function Toolbar({ onOpenFile, onSave, onClose }: ToolbarProps) {
-  const { sidebarOpen, toggleSidebar, openDialog, currentPage, activeTool } = useUIStore();
-  const { isDocumentLoaded, isModified, fileName, setFileName, rotatePage } = useDocumentStore();
+  const { sidebarOpen, toggleSidebar, currentPage, activeTool } = useUIStore();
+  const { isDocumentLoaded, isModified, fileName, setFileName } = useDocumentStore();
   const { undo, redo, canUndo, canRedo } = useAnnotationStore();
 
   const handleUndo = () => {
@@ -124,47 +120,12 @@ export function Toolbar({ onOpenFile, onSave, onClose }: ToolbarProps) {
             <div className="w-px h-5 bg-border-subtle" />
 
             <Button
-              icon={<RotateCcw size={16} />}
-              variant="ghost"
-              size="sm"
-              onClick={() => rotatePage(currentPage - 1, -90)}
-              title="Rotate page left 90°"
-            />
-            <Button
-              icon={<RotateCw size={16} />}
-              variant="ghost"
-              size="sm"
-              onClick={() => rotatePage(currentPage - 1, 90)}
-              title="Rotate page right 90°"
-            />
-
-            <Button
               icon={<Printer size={16} />}
               variant="ghost"
               size="sm"
               onClick={() => window.print()}
             >
               Print
-            </Button>
-
-            <div className="w-px h-5 bg-border-subtle" />
-
-            <Button
-              icon={<Merge size={16} />}
-              variant="ghost"
-              size="sm"
-              onClick={() => openDialog('merge')}
-            >
-              Merge
-            </Button>
-
-            <Button
-              icon={<Scissors size={16} />}
-              variant="ghost"
-              size="sm"
-              onClick={() => openDialog('split')}
-            >
-              Split
             </Button>
           </>
         )}

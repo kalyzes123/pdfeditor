@@ -91,20 +91,21 @@ export function AnnotationToolbar() {
   const showStampOptions = activeTool === 'stamp';
 
   return (
-    <div className="flex flex-col gap-1.5 p-2 bg-surface-raised border-r border-border-subtle w-14 items-center h-full overflow-y-auto">
+    <div className="flex flex-col gap-1 p-2 bg-surface-raised border-r border-border-subtle w-18 items-center h-full overflow-y-auto">
       {tools.map(({ tool, icon, label, shortcut }) => (
         <button
           key={tool}
           onClick={() => handleToolClick(tool)}
           onMouseEnter={(e) => showTooltip(e, `${label}${shortcut ? ` (${shortcut})` : ''}`)}
           onMouseLeave={hideTooltip}
-          className={`p-2 rounded-lg transition-colors ${
+          className={`w-full flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-lg transition-colors ${
             activeTool === tool
               ? 'bg-accent-dim text-accent'
               : 'text-text-muted hover:bg-surface-overlay hover:text-text-primary'
           }`}
         >
           {icon}
+          <span className="text-[9px] leading-none">{label}</span>
         </button>
       ))}
 
