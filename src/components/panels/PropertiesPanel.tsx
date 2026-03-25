@@ -20,24 +20,24 @@ export function PropertiesPanel() {
   const { type, fill, stroke, strokeWidth, opacity, fontSize, fontFamily, fontWeight, fontStyle, underline, linethrough } = selectedObjectProps;
 
   return (
-    <div className="w-[180px] bg-surface-raised border-l border-border-subtle flex flex-col overflow-y-auto">
-      <div className="px-3 py-2 border-b border-border-subtle text-xs font-semibold text-text-secondary uppercase tracking-wider">
+    <div className="w-55 bg-surface-raised border-l border-border-subtle flex flex-col overflow-y-auto shrink-0">
+      <div className="px-4 py-2.5 border-b border-border-subtle text-[11px] font-semibold text-text-secondary uppercase tracking-widest">
         Properties
       </div>
 
-      <div className="flex flex-col gap-4 p-3">
+      <div className="flex flex-col gap-5 p-4">
         {/* Appearance */}
-        <section className="flex flex-col gap-2">
-          <span className="text-[10px] text-text-muted font-medium uppercase tracking-wider">Appearance</span>
+        <section className="flex flex-col gap-3">
+          <span className="text-[10px] text-text-muted font-semibold uppercase tracking-widest">Appearance</span>
 
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-text-secondary">Fill</span>
-            <div className="flex items-center gap-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs text-text-secondary shrink-0">Fill</span>
+            <div className="flex items-center gap-2">
               <button
-                title={fill === 'transparent' ? 'No fill (click to add)' : 'Click to remove fill'}
+                title={fill === 'transparent' ? 'No fill — click to enable' : 'Click to remove fill'}
                 onClick={() => update({ fill: fill === 'transparent' ? '#ff0000' : 'transparent' })}
-                className={`w-4 h-4 rounded border text-[9px] flex items-center justify-center transition-colors ${fill === 'transparent' ? 'border-border-moderate text-text-muted bg-surface-overlay' : 'border-border-subtle bg-white'}`}
-                style={fill === 'transparent' ? {} : { background: 'repeating-conic-gradient(#ccc 0% 25%, white 0% 50%) 0 0 / 6px 6px' }}
+                className={`w-5 h-5 rounded border text-[9px] flex items-center justify-center transition-colors shrink-0 ${fill === 'transparent' ? 'border-border-moderate text-text-muted bg-surface-overlay' : 'border-border-subtle'}`}
+                style={fill !== 'transparent' ? { background: 'repeating-conic-gradient(#999 0% 25%, #eee 0% 50%) 0 0 / 6px 6px' } : {}}
               >
                 {fill === 'transparent' ? '∅' : ''}
               </button>
@@ -46,33 +46,33 @@ export function PropertiesPanel() {
                 value={typeof fill === 'string' && fill.startsWith('#') ? fill : '#ff0000'}
                 onChange={(e) => update({ fill: e.target.value })}
                 disabled={fill === 'transparent'}
-                className="w-7 h-6 rounded cursor-pointer border border-border-subtle bg-transparent p-0 disabled:opacity-30"
+                className="w-8 h-7 rounded cursor-pointer border border-border-subtle bg-transparent p-0 disabled:opacity-30 disabled:cursor-not-allowed"
               />
             </div>
           </div>
 
           {type !== 'text' && (
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-text-secondary">Stroke</span>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-text-secondary shrink-0">Stroke</span>
               <input
                 type="color"
                 value={typeof stroke === 'string' && stroke.startsWith('#') ? stroke : '#000000'}
                 onChange={(e) => update({ stroke: e.target.value })}
-                className="w-7 h-6 rounded cursor-pointer border border-border-subtle bg-transparent p-0"
+                className="w-8 h-7 rounded cursor-pointer border border-border-subtle bg-transparent p-0"
               />
             </div>
           )}
 
           {type !== 'text' && strokeWidth !== undefined && (
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-text-secondary">Width</span>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-text-secondary shrink-0">Stroke width</span>
               <input
                 type="number"
                 min={1}
                 max={20}
                 value={strokeWidth}
                 onChange={(e) => update({ strokeWidth: Number(e.target.value) })}
-                className="w-12 text-xs text-right bg-surface-overlay border border-border-subtle rounded px-1 py-0.5 text-text-primary focus:outline-none"
+                className="w-14 text-xs text-right bg-surface-overlay border border-border-subtle rounded px-2 py-1 text-text-primary focus:outline-none"
               />
             </div>
           )}
@@ -80,56 +80,59 @@ export function PropertiesPanel() {
 
         {/* Opacity */}
         <section className="flex flex-col gap-2">
-          <span className="text-[10px] text-text-muted font-medium uppercase tracking-wider">Opacity</span>
-          <div className="flex items-center gap-2">
-            <input
-              type="range"
-              min={0.1}
-              max={1}
-              step={0.05}
-              value={opacity ?? 1}
-              onChange={(e) => update({ opacity: Number(e.target.value) })}
-              className="flex-1 accent-accent"
-            />
-            <span className="text-xs text-text-secondary w-8 text-right">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-text-muted font-semibold uppercase tracking-widest">Opacity</span>
+            <span className="text-xs font-medium text-text-primary tabular-nums">
               {Math.round((opacity ?? 1) * 100)}%
             </span>
           </div>
+          <input
+            type="range"
+            min={0.1}
+            max={1}
+            step={0.05}
+            value={opacity ?? 1}
+            onChange={(e) => update({ opacity: Number(e.target.value) })}
+            className="w-full accent-accent"
+          />
         </section>
 
         {/* Text properties */}
         {type === 'text' && (
-          <section className="flex flex-col gap-2">
-            <span className="text-[10px] text-text-muted font-medium uppercase tracking-wider">Text</span>
+          <section className="flex flex-col gap-3">
+            <span className="text-[10px] text-text-muted font-semibold uppercase tracking-widest">Text</span>
 
             <select
               value={fontFamily ?? 'Arial'}
               onChange={(e) => update({ fontFamily: e.target.value })}
-              className="w-full text-xs bg-surface-overlay border border-border-subtle rounded px-1 py-1 text-text-primary focus:outline-none"
+              className="w-full text-xs bg-surface-overlay border border-border-subtle rounded px-2 py-1.5 text-text-primary focus:outline-none"
             >
               {fontFamilies.map((f) => <option key={f} value={f}>{f}</option>)}
             </select>
 
-            <select
-              value={fontSize ?? 16}
-              onChange={(e) => update({ fontSize: Number(e.target.value) })}
-              className="w-full text-xs bg-surface-overlay border border-border-subtle rounded px-1 py-1 text-text-primary focus:outline-none"
-            >
-              {fontSizes.map((s) => <option key={s} value={s}>{s}px</option>)}
-            </select>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-text-secondary shrink-0">Size</span>
+              <select
+                value={fontSize ?? 16}
+                onChange={(e) => update({ fontSize: Number(e.target.value) })}
+                className="flex-1 text-xs bg-surface-overlay border border-border-subtle rounded px-2 py-1.5 text-text-primary focus:outline-none"
+              >
+                {fontSizes.map((s) => <option key={s} value={s}>{s}px</option>)}
+              </select>
+            </div>
 
             <div className="flex gap-1">
               {([
-                { icon: <Bold size={12} />, title: 'Bold', active: fontWeight === 'bold', onClick: () => update({ fontWeight: fontWeight === 'bold' ? 'normal' : 'bold' }) },
-                { icon: <Italic size={12} />, title: 'Italic', active: fontStyle === 'italic', onClick: () => update({ fontStyle: fontStyle === 'italic' ? 'normal' : 'italic' }) },
-                { icon: <Underline size={12} />, title: 'Underline', active: underline, onClick: () => update({ underline: !underline }) },
-                { icon: <Strikethrough size={12} />, title: 'Strikethrough', active: linethrough, onClick: () => update({ linethrough: !linethrough }) },
+                { icon: <Bold size={13} />, title: 'Bold', active: fontWeight === 'bold', onClick: () => update({ fontWeight: fontWeight === 'bold' ? 'normal' : 'bold' }) },
+                { icon: <Italic size={13} />, title: 'Italic', active: fontStyle === 'italic', onClick: () => update({ fontStyle: fontStyle === 'italic' ? 'normal' : 'italic' }) },
+                { icon: <Underline size={13} />, title: 'Underline', active: underline, onClick: () => update({ underline: !underline }) },
+                { icon: <Strikethrough size={13} />, title: 'Strikethrough', active: linethrough, onClick: () => update({ linethrough: !linethrough }) },
               ] as const).map((btn) => (
                 <button
                   key={btn.title}
                   onClick={btn.onClick}
                   title={btn.title}
-                  className={`flex-1 py-1 rounded text-xs transition-colors ${btn.active ? 'bg-accent-dim text-accent' : 'text-text-muted hover:bg-surface-overlay hover:text-text-primary'}`}
+                  className={`flex-1 py-1.5 rounded text-xs transition-colors flex items-center justify-center ${btn.active ? 'bg-accent-dim text-accent' : 'text-text-muted hover:bg-surface-overlay hover:text-text-primary'}`}
                 >
                   {btn.icon}
                 </button>
