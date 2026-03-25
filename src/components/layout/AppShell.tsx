@@ -167,7 +167,7 @@ export function AppShell() {
             </div>
             {sidebarOpen && <div className="no-print"><PagePanel /></div>}
             <PDFViewer />
-            <PropertiesPanel />
+            <div className="no-print"><PropertiesPanel /></div>
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center p-8">

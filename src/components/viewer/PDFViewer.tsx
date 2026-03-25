@@ -101,7 +101,7 @@ export function PDFViewer() {
   const currentMatch = searchResults[currentMatchIndex];
 
   return (
-    <div ref={containerRef} className="flex-1 overflow-auto bg-surface-base p-4">
+    <div ref={containerRef} className="pdf-viewer-container flex-1 overflow-auto bg-surface-base p-4">
       <div className="flex flex-col items-center gap-4">
         {Array.from({ length: pageCount }, (_, pageIndex) => {
           // Use stored page meta for placeholder dimensions so scroll position is

@@ -90,7 +90,51 @@ body {
 
 /* Print styles */
 @media print {
+  @page { margin: 0; size: auto; }
+
   body { background: white !important; }
   .no-print { display: none !important; }
   #root { overflow: visible !important; }
+
+  /* Strip the viewer's dark background and padding */
+  .pdf-viewer-container {
+    background: white !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+    width: 100% !important;
+  }
+
+  /* Inner flex column centering the pages */
+  .pdf-viewer-container > div {
+    display: block !important;
+    gap: 0 !important;
+  }
+
+  /* Each page wrapper: one printed page each */
+  [data-page] {
+    page-break-after: always;
+    break-after: page;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100vw !important;
+    display: flex !important;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  /* The PDF page itself: scale to paper width */
+  [data-page] > .relative {
+    box-shadow: none !important;
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100%;
+  }
+
+  /* Stretch canvases to fill available width */
+  [data-page] canvas {
+    width: 100% !important;
+    height: auto !important;
+    display: block;
+  }
 }
