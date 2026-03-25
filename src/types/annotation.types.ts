@@ -2,7 +2,6 @@ export type AnnotationTool =
   | 'pan'
   | 'select'
   | 'text'
-  | 'highlight'
   | 'underline'
   | 'rectangle'
   | 'circle'

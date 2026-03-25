@@ -119,7 +119,12 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
     managerRef.current?.resize(width, height);
   }, [width, height]);
 
-  // Update tool when it changes
+  // Update tool when it changes.
+  // Font-specific options (fontSize, fontFamily, bold/italic/underline/strikethrough) are
+  // intentionally excluded from the dep array: setupTextTool reads them from the store at
+  // click-time, so re-invoking setTool() when they change would reset canvas selectability
+  // mid-interaction without any benefit.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     managerRef.current?.setTool(activeTool, {
       color: activeColor,
@@ -136,8 +141,6 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
     });
   }, [
     activeTool, activeColor, activeOpacity, activeStrokeWidth,
-    activeFontSize, activeFontFamily,
-    activeFontBold, activeFontItalic, activeFontUnderline, activeFontStrikethrough,
     activeStampLabel, pendingSignatureDataURL,
   ]);
 

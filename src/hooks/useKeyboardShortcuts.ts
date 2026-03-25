@@ -141,9 +141,6 @@ export function useKeyboardShortcuts() {
         case 'p':
           setTool('freehand');
           break;
-        case 'h':
-          setTool('highlight');
-          break;
         case 'r':
           setTool('rectangle');
           break;

@@ -1,6 +1,7 @@
 import { useUIStore } from '../../store/uiStore';
 import { annotationManagers } from '../../services/annotationRegistry';
 import { Bold, Italic, Underline, Strikethrough } from 'lucide-react';
+import { useCallback, useEffect } from 'react';
 
 const fontFamilies = [
   'Arial', 'Helvetica', 'Times New Roman', 'Georgia',
@@ -9,13 +10,32 @@ const fontFamilies = [
 const fontSizes = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 64, 72];
 
 export function PropertiesPanel() {
-  const { selectedObjectProps, currentPage } = useUIStore();
+  const {
+    selectedObjectProps, currentPage,
+    setFontSize, setFontFamily, setFontBold, setFontItalic, setFontUnderline, setFontStrikethrough,
+    setColor, setOpacity,
+  } = useUIStore();
+
+  // When a text object is selected, sync its current properties into the store
+  // so the next textbox created will inherit them.
+  useEffect(() => {
+    if (!selectedObjectProps || selectedObjectProps.type !== 'text') return;
+    const { fontSize, fontFamily, fontWeight, fontStyle, underline, linethrough, fill, opacity } = selectedObjectProps;
+    if (fontSize !== undefined) setFontSize(fontSize);
+    if (fontFamily !== undefined) setFontFamily(fontFamily);
+    if (fontWeight !== undefined) setFontBold(fontWeight === 'bold');
+    if (fontStyle !== undefined) setFontItalic(fontStyle === 'italic');
+    if (underline !== undefined) setFontUnderline(underline);
+    if (linethrough !== undefined) setFontStrikethrough(linethrough);
+    if (fill !== undefined && fill !== 'transparent') setColor(fill);
+    if (opacity !== undefined) setOpacity(opacity);
+  }, [selectedObjectProps, setFontSize, setFontFamily, setFontBold, setFontItalic, setFontUnderline, setFontStrikethrough, setColor, setOpacity]);
+
+  const update = useCallback((props: Parameters<typeof import('../../services/annotationManager').AnnotationManager.prototype.updateSelectedObject>[0]) => {
+    annotationManagers.get(currentPage - 1)?.updateSelectedObject(props);
+  }, [currentPage]);
 
   if (!selectedObjectProps) return null;
-
-  const update = (props: Parameters<typeof import('../../services/annotationManager').AnnotationManager.prototype.updateSelectedObject>[0]) => {
-    annotationManagers.get(currentPage - 1)?.updateSelectedObject(props);
-  };
 
   const { type, fill, stroke, strokeWidth, opacity, fontSize, fontFamily, fontWeight, fontStyle, underline, linethrough } = selectedObjectProps;
 
