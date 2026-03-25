@@ -12,10 +12,6 @@ import {
   Eraser,
   MoveRight,
   Stamp,
-  Bold,
-  Italic,
-  Underline,
-  Strikethrough,
   Image,
 } from 'lucide-react';
 import { useUIStore } from '../../store/uiStore';
@@ -39,13 +35,6 @@ const tools: { tool: AnnotationTool; icon: React.ReactNode; label: string; short
 
 const presetColors = ['#000000', '#FF0000', '#FFFF00', '#008000', '#FF8C00'];
 
-const fontFamilies = [
-  'Arial', 'Helvetica', 'Times New Roman', 'Georgia',
-  'Courier New', 'Verdana', 'Trebuchet MS', 'Comic Sans MS',
-];
-
-const fontSizes = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 64, 72];
-
 const stampLabels = ['APPROVED', 'REJECTED', 'DRAFT', 'CONFIDENTIAL', 'FOR REVIEW', 'VOID'];
 const stampColors: Record<string, string> = {
   APPROVED: '#16a34a',
@@ -61,12 +50,6 @@ export function AnnotationToolbar() {
     activeTool, setTool,
     activeColor, setColor,
     activeOpacity, setOpacity,
-    activeFontSize, setFontSize,
-    activeFontFamily, setFontFamily,
-    activeFontBold, setFontBold,
-    activeFontItalic, setFontItalic,
-    activeFontUnderline, setFontUnderline,
-    activeFontStrikethrough, setFontStrikethrough,
     activeStrokeWidth, setStrokeWidth,
     activeStampLabel, setStampLabel,
     openDialog,
@@ -86,7 +69,6 @@ export function AnnotationToolbar() {
     setTool(tool);
   };
 
-  const showTextOptions = activeTool === 'text' || activeTool === 'select';
   const showStrokeOptions = ['freehand', 'underline', 'rectangle', 'circle', 'arrow'].includes(activeTool);
   const showStampOptions = activeTool === 'stamp';
 
@@ -111,52 +93,6 @@ export function AnnotationToolbar() {
 
       <div className="w-10 border-t border-border-subtle my-1" />
 
-      {/* Font controls */}
-      {showTextOptions && (
-        <>
-          <select
-            value={activeFontFamily}
-            onChange={(e) => setFontFamily(e.target.value)}
-            onMouseEnter={(e) => showTooltip(e, 'Font Family')}
-            onMouseLeave={hideTooltip}
-            className="w-9 h-7 text-[9px] text-text-secondary bg-surface-overlay border border-border-subtle rounded cursor-pointer hover:bg-surface-sunken appearance-none text-center"
-          >
-            {fontFamilies.map((f) => <option key={f} value={f}>{f}</option>)}
-          </select>
-          <select
-            value={activeFontSize}
-            onChange={(e) => setFontSize(Number(e.target.value))}
-            onMouseEnter={(e) => showTooltip(e, 'Font Size')}
-            onMouseLeave={hideTooltip}
-            className="w-9 h-7 text-[10px] text-text-secondary bg-surface-overlay border border-border-subtle rounded cursor-pointer hover:bg-surface-sunken appearance-none text-center"
-          >
-            {fontSizes.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-
-          {/* B / I / U / S — stacked vertically */}
-          <div className="flex flex-col gap-0.5">
-            {([
-              { key: 'bold', icon: <Bold size={14} />, label: 'Bold', active: activeFontBold, toggle: () => setFontBold(!activeFontBold) },
-              { key: 'italic', icon: <Italic size={14} />, label: 'Italic', active: activeFontItalic, toggle: () => setFontItalic(!activeFontItalic) },
-              { key: 'underline', icon: <Underline size={14} />, label: 'Underline', active: activeFontUnderline, toggle: () => setFontUnderline(!activeFontUnderline) },
-              { key: 'strike', icon: <Strikethrough size={14} />, label: 'Strikethrough', active: activeFontStrikethrough, toggle: () => setFontStrikethrough(!activeFontStrikethrough) },
-            ] as const).map(({ key, icon, label, active, toggle }) => (
-              <button
-                key={key}
-                onClick={toggle}
-                onMouseEnter={(e) => showTooltip(e, label)}
-                onMouseLeave={hideTooltip}
-                className={`p-1 rounded transition-colors ${active ? 'bg-accent-dim text-accent' : 'text-text-muted hover:bg-surface-overlay hover:text-text-primary'}`}
-              >
-                {icon}
-              </button>
-            ))}
-          </div>
-
-          <div className="w-10 border-t border-border-subtle my-1" />
-        </>
-      )}
-
       {/* Stroke width */}
       {showStrokeOptions && (
         <>
@@ -165,11 +101,11 @@ export function AnnotationToolbar() {
             onChange={(e) => setStrokeWidth(Number(e.target.value))}
             onMouseEnter={(e) => showTooltip(e, 'Stroke Width')}
             onMouseLeave={hideTooltip}
-            className="w-9 h-7 text-[10px] text-text-secondary bg-surface-overlay border border-border-subtle rounded cursor-pointer hover:bg-surface-sunken appearance-none text-center"
+            className="w-full h-7 text-[10px] text-text-secondary bg-surface-overlay border border-border-subtle rounded cursor-pointer hover:bg-surface-sunken appearance-none text-center"
           >
             {[1, 2, 3, 4, 5, 8, 10].map((w) => <option key={w} value={w}>{w}px</option>)}
           </select>
-          <div className="w-10 border-t border-border-subtle my-1" />
+          <div className="w-full border-t border-border-subtle my-1" />
         </>
       )}
 
@@ -194,16 +130,16 @@ export function AnnotationToolbar() {
               </button>
             ))}
           </div>
-          <div className="w-10 border-t border-border-subtle my-1" />
+          <div className="w-full border-t border-border-subtle my-1" />
         </>
       )}
 
       {/* Opacity slider */}
-      <div
-        className="flex flex-col items-center gap-0.5"
-        onMouseEnter={(e) => showTooltip(e, `Opacity ${Math.round(activeOpacity * 100)}%`)}
-        onMouseLeave={hideTooltip}
-      >
+      <div className="flex flex-col gap-0.5 w-full">
+        <div className="flex items-center justify-between">
+          <span className="text-[8px] text-text-muted">Opacity</span>
+          <span className="text-[8px] text-text-muted tabular-nums">{Math.round(activeOpacity * 100)}%</span>
+        </div>
         <input
           type="range"
           min={0.1}
@@ -211,37 +147,33 @@ export function AnnotationToolbar() {
           step={0.05}
           value={activeOpacity}
           onChange={(e) => setOpacity(Number(e.target.value))}
-          className="w-8 accent-accent cursor-pointer"
-          style={{ writingMode: 'vertical-lr', direction: 'rtl', height: '48px' }}
+          onMouseEnter={(e) => showTooltip(e, `Opacity ${Math.round(activeOpacity * 100)}%`)}
+          onMouseLeave={hideTooltip}
+          className="w-full accent-accent cursor-pointer"
         />
-        <span className="text-[8px] text-text-muted">{Math.round(activeOpacity * 100)}%</span>
       </div>
 
-      <div className="w-10 border-t border-border-subtle my-1" />
+      <div className="w-full border-t border-border-subtle my-1" />
 
       {/* Custom color picker + presets */}
-      <span className="text-[8px] text-text-muted">Color</span>
-      <div className="flex flex-col items-center gap-1">
-        <div
-          onMouseEnter={(e) => showTooltip(e, 'Pick color')}
-          onMouseLeave={hideTooltip}
-          className="relative"
-        >
-          <input
-            type="color"
-            value={activeColor}
-            onChange={(e) => setColor(e.target.value)}
-            className="w-7 h-7 rounded cursor-pointer border border-border-subtle bg-transparent p-0"
-            title="Pick color"
-          />
-        </div>
+      <span className="text-[8px] text-text-muted self-start">Color</span>
+      <input
+        type="color"
+        value={activeColor}
+        onChange={(e) => setColor(e.target.value)}
+        onMouseEnter={(e) => showTooltip(e, 'Pick color')}
+        onMouseLeave={hideTooltip}
+        className="w-full h-7 rounded cursor-pointer border border-border-subtle bg-transparent p-0"
+        title="Pick color"
+      />
+      <div className="grid grid-cols-5 gap-0.5 w-full">
         {presetColors.map((color) => (
           <button
             key={color}
             onClick={() => setColor(color)}
             onMouseEnter={(e) => showTooltip(e, color)}
             onMouseLeave={hideTooltip}
-            className={`w-5 h-5 rounded-full border-2 transition-transform ${
+            className={`w-full aspect-square rounded-full border-2 transition-transform ${
               activeColor === color ? 'border-accent scale-110' : 'border-surface-sunken'
             }`}
             style={{ backgroundColor: color }}
