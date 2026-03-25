@@ -34,6 +34,29 @@ body {
   min-height: 100vh;
 }
 
+/* ── Homepage animations ─────────────────────────────────── */
+@keyframes float-up {
+  0%   { transform: translateY(0px) rotate(var(--page-rot, 0deg)); opacity: 0; }
+  8%   { opacity: 0.45; }
+  92%  { opacity: 0.45; }
+  100% { transform: translateY(-105vh) rotate(calc(var(--page-rot, 0deg) + 20deg)); opacity: 0; }
+}
+
+@keyframes pixel-glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 12px rgba(59,130,246,0.7)); }
+  50%       { filter: drop-shadow(0 0 28px rgba(59,130,246,1)); }
+}
+
+@keyframes scan-line {
+  0%   { top: -4px; }
+  100% { top: 100%; }
+}
+
+@keyframes blink-block {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
 /* pdf.js text layer styles */
 .textLayer {
   position: absolute;
