@@ -157,15 +157,19 @@ export function AnnotationToolbar() {
 
       {/* Custom color picker + presets */}
       <span className="text-[8px] text-text-muted self-start">Color</span>
-      <input
-        type="color"
-        value={activeColor}
-        onChange={(e) => setColor(e.target.value)}
-        onMouseEnter={(e) => showTooltip(e, 'Pick color')}
+      <label
+        className="w-full h-9 rounded cursor-pointer border border-border-subtle overflow-hidden block"
+        onMouseEnter={(e) => showTooltip(e as unknown as React.MouseEvent, 'Pick color')}
         onMouseLeave={hideTooltip}
-        className="w-full h-7 rounded cursor-pointer border border-border-subtle bg-transparent p-0"
-        title="Pick color"
-      />
+      >
+        <input
+          type="color"
+          value={activeColor}
+          onChange={(e) => setColor(e.target.value)}
+          className="w-full h-full cursor-pointer border-0 p-0 m-0 block"
+          style={{ minWidth: '100%', minHeight: '100%' }}
+        />
+      </label>
       <div className="grid grid-cols-5 gap-0.5 w-full">
         {presetColors.map((color) => (
           <button
