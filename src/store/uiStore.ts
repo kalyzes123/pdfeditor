@@ -68,8 +68,10 @@ interface UIStore {
   currentMatchIndex: number;
   toasts: ToastMessage[];
   confirmDialog: ConfirmOptions | null;
+  pendingSignatureDataURL: string | null;
 
   setTool: (tool: AnnotationTool) => void;
+  setPendingSignatureDataURL: (url: string | null) => void;
   setColor: (color: string) => void;
   setStrokeWidth: (width: number) => void;
   setOpacity: (opacity: number) => void;
@@ -137,8 +139,10 @@ export const useUIStore = create<UIStore>((set, get) => ({
   currentMatchIndex: 0,
   toasts: [],
   confirmDialog: null,
+  pendingSignatureDataURL: null,
 
   setTool: (tool) => set({ activeTool: tool }),
+  setPendingSignatureDataURL: (url) => set({ pendingSignatureDataURL: url }),
   setColor: (color) => set({ activeColor: color }),
   setStrokeWidth: (width) => set({ activeStrokeWidth: width }),
   setOpacity: (opacity) => set({ activeOpacity: opacity }),

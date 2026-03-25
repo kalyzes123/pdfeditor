@@ -18,7 +18,7 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
     activeTool, activeColor, activeStrokeWidth, activeOpacity,
     activeFontSize, activeFontFamily,
     activeFontBold, activeFontItalic, activeFontUnderline, activeFontStrikethrough,
-    activeStampLabel, setSelectedObjectProps,
+    activeStampLabel, setSelectedObjectProps, pendingSignatureDataURL,
   } = useUIStore();
   const { savePageAnnotations, pushHistory, annotations } = useAnnotationStore();
   const { pages } = useDocumentStore();
@@ -122,12 +122,13 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
       fontUnderline: activeFontUnderline,
       fontStrikethrough: activeFontStrikethrough,
       stampLabel: activeStampLabel,
+      signatureDataURL: pendingSignatureDataURL ?? undefined,
     });
   }, [
     activeTool, activeColor, activeOpacity, activeStrokeWidth,
     activeFontSize, activeFontFamily,
     activeFontBold, activeFontItalic, activeFontUnderline, activeFontStrikethrough,
-    activeStampLabel,
+    activeStampLabel, pendingSignatureDataURL,
   ]);
 
   return (

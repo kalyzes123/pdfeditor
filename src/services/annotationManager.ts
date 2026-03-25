@@ -1,6 +1,7 @@
 import * as fabric from 'fabric';
 import type { AnnotationTool } from '../types/annotation.types';
 import type { SelectedObjectProps } from '../store/uiStore';
+import { useUIStore } from '../store/uiStore';
 
 interface ToolOptions {
   color?: string;
@@ -13,6 +14,7 @@ interface ToolOptions {
   fontUnderline?: boolean;
   fontStrikethrough?: boolean;
   stampLabel?: string;
+  signatureDataURL?: string;
 }
 
 export class AnnotationManager {
@@ -199,6 +201,12 @@ export class AnnotationManager {
 
       case 'stamp':
         this.setupStampTool(options);
+        break;
+
+      case 'signature':
+        if (options.signatureDataURL) {
+          this.setupSignaturePlacementTool(options.signatureDataURL, options.opacity ?? 1);
+        }
         break;
 
       case 'image':
@@ -849,6 +857,31 @@ export class AnnotationManager {
     this.canvas.add(lastDeleted);
     this.canvas.renderAll();
     return true;
+  }
+
+  private setupSignaturePlacementTool(dataURL: string, opacity: number): void {
+    if (!this.canvas) return;
+    this.canvas.defaultCursor = 'crosshair';
+
+    const handler = (e: fabric.TEvent) => {
+      if (!this.canvas) return;
+      if ((e as fabric.TEvent & { target?: fabric.FabricObject }).target) return;
+      const pointer = this.canvas.getScenePoint(e.e as MouseEvent);
+
+      fabric.FabricImage.fromURL(dataURL).then((img) => {
+        if (!this.canvas) return;
+        img.set({ left: pointer.x, top: pointer.y, scaleX: 0.5, scaleY: 0.5, opacity });
+        this.canvas.add(img);
+        this.canvas.setActiveObject(img);
+        this.canvas.renderAll();
+        // Switch back to select after placing once
+        useUIStore.getState().setPendingSignatureDataURL(null);
+        useUIStore.getState().setTool('select');
+      });
+    };
+
+    this.canvas.on('mouse:down', handler);
+    this.cleanupListeners.push(() => this.canvas?.off('mouse:down', handler));
   }
 
   private setupImageTool(): void {

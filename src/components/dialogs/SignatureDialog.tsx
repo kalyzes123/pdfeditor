@@ -2,7 +2,6 @@ import { useRef, useState } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import { useUIStore } from '../../store/uiStore';
 import { useAnnotationStore } from '../../store/annotationStore';
-import { annotationManagers } from '../../services/annotationRegistry';
 import { DialogBase } from './DialogBase';
 import { Button } from '../common/Button';
 
@@ -11,7 +10,9 @@ type Tab = 'draw' | 'type';
 export function SignatureDialog() {
   const isOpen = useUIStore((s) => s.signatureDialogOpen);
   const closeDialog = useUIStore((s) => s.closeDialog);
-  const currentPage = useUIStore((s) => s.currentPage);
+  const setTool = useUIStore((s) => s.setTool);
+  const addToast = useUIStore((s) => s.addToast);
+  const setPendingSignatureDataURL = useUIStore((s) => s.setPendingSignatureDataURL);
   const addSignature = useAnnotationStore((s) => s.addSignature);
 
   const [tab, setTab] = useState<Tab>('draw');
@@ -28,16 +29,14 @@ export function SignatureDialog() {
     }
   };
 
-  const handlePlace = () => {
+  const handleSave = () => {
     let dataURL = '';
 
     if (tab === 'draw') {
       if (!sigCanvasRef.current || sigCanvasRef.current.isEmpty()) return;
-      // Export directly from the canvas — no trimming to avoid issues
       dataURL = sigCanvasRef.current.toDataURL('image/png');
     } else {
       if (!typedText.trim()) return;
-      // Render typed signature - measure text to fit tightly
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d')!;
       const font = 'italic 40px "Georgia", serif';
@@ -47,7 +46,6 @@ export function SignatureDialog() {
       const textHeight = 60;
       canvas.width = textWidth;
       canvas.height = textHeight;
-      // Re-set font after resize
       ctx.font = font;
       ctx.fillStyle = '#000000';
       ctx.textBaseline = 'middle';
@@ -58,14 +56,9 @@ export function SignatureDialog() {
     if (!dataURL) return;
 
     addSignature({ mode: tab, dataURL });
-
-    // Place on current page's annotation canvas
-    const pageIndex = currentPage - 1;
-    const manager = annotationManagers.get(pageIndex);
-    if (manager) {
-      manager.addSignatureImage(dataURL, 100, 100);
-    }
-
+    setPendingSignatureDataURL(dataURL);
+    setTool('signature');
+    addToast('info', 'Signature saved — click on the page to place it');
     handleClose();
   };
 
@@ -133,8 +126,8 @@ export function SignatureDialog() {
         <Button variant="ghost" onClick={handleClear}>
           Clear
         </Button>
-        <Button variant="primary" onClick={handlePlace}>
-          Place Signature
+        <Button variant="primary" onClick={handleSave}>
+          Save Signature
         </Button>
       </div>
     </DialogBase>
