@@ -8,7 +8,6 @@ import {
   Square,
   Circle,
   Pencil,
-  StickyNote,
   PenTool,
   Eraser,
   MoveRight,
@@ -33,7 +32,6 @@ const tools: { tool: AnnotationTool; icon: React.ReactNode; label: string; short
   { tool: 'rectangle', icon: <Square size={18} />, label: 'Rectangle', shortcut: 'R' },
   { tool: 'circle', icon: <Circle size={18} />, label: 'Circle' },
   { tool: 'stamp', icon: <Stamp size={18} />, label: 'Stamp' },
-  { tool: 'sticky', icon: <StickyNote size={18} />, label: 'Sticky Note' },
   { tool: 'signature', icon: <PenTool size={18} />, label: 'Signature' },
   { tool: 'eraser', icon: <Eraser size={18} />, label: 'Eraser', shortcut: 'E' },
   { tool: 'image' as AnnotationTool, icon: <Image size={18} />, label: 'Insert Image' },
@@ -49,6 +47,14 @@ const fontFamilies = [
 const fontSizes = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 64, 72];
 
 const stampLabels = ['APPROVED', 'REJECTED', 'DRAFT', 'CONFIDENTIAL', 'FOR REVIEW', 'VOID'];
+const stampColors: Record<string, string> = {
+  APPROVED: '#16a34a',
+  REJECTED: '#dc2626',
+  DRAFT: '#ca8a04',
+  CONFIDENTIAL: '#dc2626',
+  'FOR REVIEW': '#2563eb',
+  VOID: '#dc2626',
+};
 
 export function AnnotationToolbar() {
   const {
@@ -85,7 +91,7 @@ export function AnnotationToolbar() {
   const showStampOptions = activeTool === 'stamp';
 
   return (
-    <div className="flex flex-col gap-1.5 p-2 bg-surface-raised border-r border-border-subtle w-12 items-center h-full overflow-y-auto">
+    <div className="flex flex-col gap-1.5 p-2 bg-surface-raised border-r border-border-subtle w-14 items-center h-full overflow-y-auto">
       {tools.map(({ tool, icon, label, shortcut }) => (
         <button
           key={tool}
@@ -102,7 +108,7 @@ export function AnnotationToolbar() {
         </button>
       ))}
 
-      <div className="w-8 border-t border-border-subtle my-1" />
+      <div className="w-10 border-t border-border-subtle my-1" />
 
       {/* Font controls */}
       {showTextOptions && (
@@ -146,7 +152,7 @@ export function AnnotationToolbar() {
             ))}
           </div>
 
-          <div className="w-8 border-t border-border-subtle my-1" />
+          <div className="w-10 border-t border-border-subtle my-1" />
         </>
       )}
 
@@ -162,23 +168,32 @@ export function AnnotationToolbar() {
           >
             {[1, 2, 3, 4, 5, 8, 10].map((w) => <option key={w} value={w}>{w}px</option>)}
           </select>
-          <div className="w-8 border-t border-border-subtle my-1" />
+          <div className="w-10 border-t border-border-subtle my-1" />
         </>
       )}
 
       {/* Stamp label */}
       {showStampOptions && (
         <>
-          <select
-            value={activeStampLabel}
-            onChange={(e) => setStampLabel(e.target.value)}
-            onMouseEnter={(e) => showTooltip(e, 'Stamp Label')}
-            onMouseLeave={hideTooltip}
-            className="w-9 h-7 text-[8px] text-text-secondary bg-surface-overlay border border-border-subtle rounded cursor-pointer hover:bg-surface-sunken appearance-none text-center"
-          >
-            {stampLabels.map((l) => <option key={l} value={l}>{l}</option>)}
-          </select>
-          <div className="w-8 border-t border-border-subtle my-1" />
+          <div className="flex flex-col gap-0.5 w-full">
+            {stampLabels.map((l) => (
+              <button
+                key={l}
+                onClick={() => setStampLabel(l)}
+                onMouseEnter={(e) => showTooltip(e, l)}
+                onMouseLeave={hideTooltip}
+                className={`w-full px-1 py-0.5 rounded text-[8px] font-bold border transition-colors text-center leading-tight ${
+                  activeStampLabel === l
+                    ? 'bg-surface-overlay border-current'
+                    : 'border-surface-overlay hover:bg-surface-overlay'
+                }`}
+                style={{ color: stampColors[l] ?? '#dc2626', borderColor: activeStampLabel === l ? (stampColors[l] ?? '#dc2626') : undefined }}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+          <div className="w-10 border-t border-border-subtle my-1" />
         </>
       )}
 
@@ -201,7 +216,7 @@ export function AnnotationToolbar() {
         <span className="text-[8px] text-text-muted">{Math.round(activeOpacity * 100)}%</span>
       </div>
 
-      <div className="w-8 border-t border-border-subtle my-1" />
+      <div className="w-10 border-t border-border-subtle my-1" />
 
       {/* Custom color picker + presets */}
       <div className="flex flex-col items-center gap-1">

@@ -193,10 +193,6 @@ export class AnnotationManager {
         this.setupEraserTool();
         break;
 
-      case 'sticky':
-        this.setupStickyNoteTool(options);
-        break;
-
       case 'arrow':
         this.setupArrowDraw(options);
         break;
@@ -470,6 +466,9 @@ export class AnnotationManager {
         });
         this.canvas!.add(rect);
       }
+      // Deselect after placing so highlights don't show selection handles
+      this.canvas!.discardActiveObject();
+      this.canvas!.requestRenderAll();
     };
 
     this.canvas.on('mouse:down', onDown);
@@ -850,51 +849,6 @@ export class AnnotationManager {
     this.canvas.add(lastDeleted);
     this.canvas.renderAll();
     return true;
-  }
-
-  private setupStickyNoteTool(options: ToolOptions): void {
-    if (!this.canvas) return;
-    this.canvas.defaultCursor = 'crosshair';
-
-    const handler = (e: fabric.TEvent) => {
-      if (!this.canvas) return;
-      if ((e as fabric.TEvent & { target?: fabric.FabricObject }).target) return;
-      const pointer = this.canvas.getScenePoint(e.e as MouseEvent);
-
-      const bg = new fabric.Rect({
-        width: 150,
-        height: 100,
-        fill: options.color ?? '#FFF9C4',
-        rx: 4,
-        ry: 4,
-        shadow: new fabric.Shadow({
-          color: 'rgba(0,0,0,0.2)',
-          blur: 4,
-          offsetX: 2,
-          offsetY: 2,
-        }),
-      });
-
-      const text = new fabric.IText('Note...', {
-        fontSize: 12,
-        fill: '#333333',
-        left: 8,
-        top: 8,
-        width: 134,
-      });
-
-      const group = new fabric.Group([bg, text], {
-        left: pointer.x,
-        top: pointer.y,
-      });
-      (group as unknown as Record<string, unknown>).data = { type: 'sticky' };
-
-      this.canvas.add(group);
-      this.canvas.setActiveObject(group);
-    };
-
-    this.canvas.on('mouse:down', handler);
-    this.cleanupListeners.push(() => this.canvas?.off('mouse:down', handler));
   }
 
   private setupImageTool(): void {

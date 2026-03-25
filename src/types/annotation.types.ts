@@ -7,7 +7,6 @@ export type AnnotationTool =
   | 'rectangle'
   | 'circle'
   | 'freehand'
-  | 'sticky'
   | 'signature'
   | 'eraser'
   | 'arrow'
