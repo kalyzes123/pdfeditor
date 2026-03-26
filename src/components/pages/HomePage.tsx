@@ -1,38 +1,61 @@
-import { useEffect, useRef, useState } from 'react';
-import { FileText, Type, PenLine, Stamp, Search, Undo2 } from 'lucide-react';
-
-const PIXEL_FONT = "'Press Start 2P', 'Courier New', monospace";
+import { useEffect, useState } from 'react';
+import {
+  FileText, Type, PenLine, Stamp, Search,
+  Undo2, Image, Scissors, ArrowRight, Sparkles,
+} from 'lucide-react';
 
 const FEATURES = [
-  { icon: <Type size={14} />, label: 'ANNOTATE' },
-  { icon: <PenLine size={14} />, label: 'DRAW' },
-  { icon: <Stamp size={14} />, label: 'SIGN' },
-  { icon: <Search size={14} />, label: 'SEARCH' },
-  { icon: <Undo2 size={14} />, label: 'HISTORY' },
+  {
+    icon: <Type size={20} />,
+    title: 'Text & Annotations',
+    desc: 'Add text, highlights, underlines and rich comments anywhere on your PDF.',
+  },
+  {
+    icon: <PenLine size={20} />,
+    title: 'Freehand Drawing',
+    desc: 'Draw arrows, shapes, and freehand strokes with full color and opacity control.',
+  },
+  {
+    icon: <Stamp size={20} />,
+    title: 'Stamps & Signatures',
+    desc: 'Apply approval stamps or capture your handwritten signature in seconds.',
+  },
+  {
+    icon: <Search size={20} />,
+    title: 'Find & Search',
+    desc: 'Instantly locate any text across all pages with highlighted match navigation.',
+  },
+  {
+    icon: <Undo2 size={20} />,
+    title: 'Full Undo / Redo',
+    desc: 'Unlimited history lets you experiment freely and roll back any mistake.',
+  },
+  {
+    icon: <Image size={20} />,
+    title: 'Insert Images',
+    desc: 'Embed photos, logos, or screenshots directly onto any page.',
+  },
+  {
+    icon: <Scissors size={20} />,
+    title: 'Redact Content',
+    desc: 'Permanently cover sensitive information before sharing your document.',
+  },
+  {
+    icon: <FileText size={20} />,
+    title: 'Export & Print',
+    desc: 'Save an annotated PDF or print with pixel-perfect layout preservation.',
+  },
 ];
-
-// Floating page config: [left%, rotation, duration, delay, width]
-const PAGES: [string, number, string, string, number][] = [
-  ['4%',   -8,  '17s',  '0s',   30],
-  ['11%',   5,  '13s', '-6s',   24],
-  ['20%',  -4,  '20s', '-12s',  40],
-  ['32%',   9,  '15s', '-3s',   28],
-  ['47%', -12,  '18s', '-9s',   22],
-  ['60%',   6,  '16s', '-1s',   36],
-  ['72%',  -5,  '21s', '-15s',  32],
-  ['83%',  11,  '14s', '-7s',   26],
-  ['92%',  -9,  '19s', '-4s',   34],
-];
-
-const TYPEWRITER_TEXT = 'EDIT · ANNOTATE · SIGN · EXPORT';
 
 export function HomePage({ onEnter }: { onEnter: () => void }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [visible, setVisible] = useState(false);
-  const [subtitle, setSubtitle] = useState('');
-  const [cursorOn, setCursorOn] = useState(true);
+  const [entered, setEntered] = useState(false);
 
-  // Any key / click to enter
+  useEffect(() => {
+    const t = setTimeout(() => setEntered(true), 80);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Any key to enter
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (['Tab', 'F5', 'F12'].includes(e.key)) return;
@@ -42,287 +65,297 @@ export function HomePage({ onEnter }: { onEnter: () => void }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onEnter]);
 
-  // Pixel-rain canvas
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const CELL = 14;
-    const FONT_SIZE = 11;
-    let cols = 0;
-    let drops: number[] = [];
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      cols = Math.floor(canvas.width / CELL);
-      drops = Array.from({ length: cols }, () =>
-        -(Math.random() * (canvas.height / CELL))
-      );
-    };
-    resize();
-    window.addEventListener('resize', resize);
-
-    const GLYPHS = ['0', '1', '█', '▓', '░', '■', '□', '▪', '▫'];
-    let frame = 0;
-    let raf: number;
-
-    const tick = () => {
-      frame++;
-      // Trailing fade
-      ctx.fillStyle = 'rgba(9,9,11,0.055)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.font = `${FONT_SIZE}px monospace`;
-      ctx.textAlign = 'left';
-
-      for (let i = 0; i < drops.length; i++) {
-        const x = i * CELL;
-        const y = drops[i] * CELL;
-        const g = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
-
-        // Bright head
-        ctx.fillStyle = '#93c5fd';
-        ctx.fillText(g, x, y);
-
-        // Second cell (medium)
-        ctx.fillStyle = 'rgba(59,130,246,0.65)';
-        ctx.fillText(GLYPHS[Math.floor(Math.random() * GLYPHS.length)], x, y - CELL);
-
-        // Third cell (dim)
-        ctx.fillStyle = 'rgba(59,130,246,0.18)';
-        ctx.fillText(GLYPHS[Math.floor(Math.random() * GLYPHS.length)], x, y - CELL * 2);
-
-        // Reset drop
-        if (y > canvas.height && Math.random() > 0.975) drops[i] = -4;
-
-        // Stagger speeds so columns fall at slightly different rates
-        if (frame % (2 + (i % 3)) === 0) drops[i] += 1;
-      }
-
-      raf = requestAnimationFrame(tick);
-    };
-    tick();
-
-    const t = setTimeout(() => setVisible(true), 150);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('resize', resize);
-      clearTimeout(t);
-    };
-  }, []);
-
-  // Typewriter effect
-  useEffect(() => {
-    if (!visible) return;
-    let i = 0;
-    const iv = setInterval(() => {
-      if (i <= TYPEWRITER_TEXT.length) {
-        setSubtitle(TYPEWRITER_TEXT.slice(0, i++));
-      } else {
-        clearInterval(iv);
-      }
-    }, 52);
-    return () => clearInterval(iv);
-  }, [visible]);
-
-  // Blinking cursor
-  useEffect(() => {
-    const iv = setInterval(() => setCursorOn(c => !c), 480);
-    return () => clearInterval(iv);
-  }, []);
-
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#09090b]">
-
-      {/* Pixel rain background */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 pointer-events-none"
-        style={{ opacity: 0.38 }}
-      />
-
-      {/* Radial vignette to focus center */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse 70% 70% at 50% 50%, transparent 0%, rgba(9,9,11,0.75) 100%)' }}
-      />
-
-      {/* CRT scanline effect */}
-      <div
-        className="absolute inset-0 pointer-events-none overflow-hidden"
-        style={{ zIndex: 5 }}
-      >
+    <div
+      className="relative min-h-screen flex flex-col overflow-x-hidden"
+      style={{ background: 'linear-gradient(135deg, #05050d 0%, #0c0c1e 50%, #080814 100%)' }}
+    >
+      {/* ── Gradient orbs ─────────────────────────────── */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Blue orb — top left */}
         <div
           style={{
-            position: 'absolute',
-            left: 0, right: 0, height: 3,
-            background: 'rgba(59,130,246,0.06)',
-            animation: 'scan-line 5s linear infinite',
+            position: 'absolute', top: '-10%', left: '-5%',
+            width: 700, height: 700, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(59,130,246,0.18) 0%, transparent 70%)',
+            animation: 'orb-1 18s ease-in-out infinite',
+            filter: 'blur(1px)',
+          }}
+        />
+        {/* Indigo orb — top right */}
+        <div
+          style={{
+            position: 'absolute', top: '-15%', right: '-10%',
+            width: 800, height: 800, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)',
+            animation: 'orb-2 22s ease-in-out infinite',
+            filter: 'blur(1px)',
+          }}
+        />
+        {/* Purple orb — bottom center */}
+        <div
+          style={{
+            position: 'absolute', bottom: '-20%', left: '35%',
+            width: 600, height: 600, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)',
+            animation: 'orb-3 26s ease-in-out infinite',
+            filter: 'blur(1px)',
+          }}
+        />
+
+        {/* Subtle dot grid */}
+        <div
+          style={{
+            position: 'absolute', inset: 0,
+            backgroundImage: 'radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px)',
+            backgroundSize: '32px 32px',
+          }}
+        />
+
+        {/* Top gradient line */}
+        <div
+          style={{
+            position: 'absolute', top: 0, left: 0, right: 0, height: 1,
+            background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.5), transparent)',
           }}
         />
       </div>
 
-      {/* Floating pixel PDF pages */}
-      {PAGES.map(([left, rot, dur, delay, w], i) => (
-        <div
-          key={i}
-          className="absolute bottom-[-80px] pointer-events-none"
-          style={{
-            left,
-            animation: `float-up ${dur} ${delay} linear infinite`,
-            ['--page-rot' as string]: `${rot}deg`,
-          }}
-        >
-          <PixelPage width={w} />
-        </div>
-      ))}
-
-      {/* ── Hero content ───────────────────────────────────── */}
-      <div
-        className="relative z-10 flex flex-col items-center gap-7 px-6 text-center"
+      {/* ── Navbar ────────────────────────────────────── */}
+      <nav
+        className="relative z-10 flex items-center justify-between px-8 py-5"
         style={{
-          transition: 'opacity 0.9s ease, transform 0.9s ease',
-          opacity: visible ? 1 : 0,
-          transform: visible ? 'translateY(0)' : 'translateY(24px)',
+          borderBottom: '1px solid rgba(255,255,255,0.05)',
+          backdropFilter: 'blur(12px)',
+          background: 'rgba(5,5,13,0.4)',
+          opacity: entered ? 1 : 0,
+          transition: 'opacity 0.6s ease',
         }}
       >
-        {/* Glowing file icon */}
-        <div style={{ animation: 'pixel-glow-pulse 2.5s ease-in-out infinite' }}>
-          <FileText
-            size={72}
-            strokeWidth={1.5}
-            className="text-[#3b82f6]"
-          />
+        <div className="flex items-center gap-2.5">
+          <div
+            style={{
+              width: 32, height: 32, borderRadius: 8,
+              background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <FileText size={16} className="text-white" />
+          </div>
+          <span className="text-white font-semibold text-sm tracking-wide">PDF Editor</span>
         </div>
 
-        {/* Title */}
-        <div style={{ fontFamily: PIXEL_FONT, lineHeight: 1.5 }}>
-          <div
-            className="text-[#3b82f6]"
-            style={{ fontSize: 'clamp(1.6rem, 5.5vw, 3.2rem)' }}
-          >
-            PDF
-          </div>
-          <div
-            className="text-white"
-            style={{ fontSize: 'clamp(1.6rem, 5.5vw, 3.2rem)' }}
-          >
-            EDITOR
-          </div>
-        </div>
-
-        {/* Typewriter subtitle */}
-        <div
-          className="text-[#3b82f6] flex items-center"
+        <button
+          onClick={onEnter}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-all"
           style={{
-            fontFamily: PIXEL_FONT,
-            fontSize: 'clamp(0.42rem, 1.4vw, 0.62rem)',
-            letterSpacing: '0.05em',
-            minHeight: '1.4em',
+            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.12)',
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.14)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.08)'; }}
+        >
+          Open Editor <ArrowRight size={14} />
+        </button>
+      </nav>
+
+      {/* ── Hero ──────────────────────────────────────── */}
+      <section className="relative z-10 flex flex-col items-center text-center px-6 pt-28 pb-24">
+        {/* Badge */}
+        <div
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '6px 14px', borderRadius: 999,
+            background: 'rgba(99,102,241,0.12)',
+            border: '1px solid rgba(99,102,241,0.3)',
+            color: '#a5b4fc',
+            fontSize: 12, fontWeight: 500,
+            marginBottom: 28,
+            animation: entered ? 'fade-up 0.7s ease both, badge-pulse 3s ease-in-out 1s infinite' : 'none',
+            animationDelay: '0s, 1s',
           }}
         >
-          {subtitle}
-          <span
-            className="ml-0.5"
-            style={{ opacity: cursorOn ? 1 : 0, transition: 'opacity 0.1s' }}
-          >█</span>
+          <Sparkles size={12} />
+          Free · No Sign-up · Works in Browser
         </div>
 
-        {/* Feature pills */}
-        <div className="flex flex-wrap justify-center gap-2">
-          {FEATURES.map((f) => (
+        {/* Main title */}
+        <h1
+          style={{
+            fontSize: 'clamp(3rem, 8vw, 6rem)',
+            fontWeight: 800,
+            lineHeight: 1.05,
+            letterSpacing: '-0.03em',
+            marginBottom: 24,
+            background: 'linear-gradient(135deg, #ffffff 20%, #a5b4fc 60%, #60a5fa 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            animation: entered ? 'fade-up 0.8s ease both' : 'none',
+            animationDelay: '0.1s',
+          }}
+        >
+          Edit PDFs<br />
+          <span
+            style={{
+              background: 'linear-gradient(135deg, #6366f1, #3b82f6, #06b6d4)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
+            Effortlessly
+          </span>
+        </h1>
+
+        {/* Subtitle */}
+        <p
+          style={{
+            fontSize: 'clamp(1rem, 2vw, 1.2rem)',
+            color: '#94a3b8',
+            maxWidth: 520,
+            lineHeight: 1.7,
+            marginBottom: 40,
+            animation: entered ? 'fade-up 0.8s ease both' : 'none',
+            animationDelay: '0.2s',
+          }}
+        >
+          Annotate, draw, sign, and redact your documents directly in the browser.
+          No uploads. No accounts. Instant and private.
+        </p>
+
+        {/* CTA buttons */}
+        <div
+          style={{
+            display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center',
+            animation: entered ? 'fade-up 0.8s ease both' : 'none',
+            animationDelay: '0.3s',
+          }}
+        >
+          {/* Primary CTA */}
+          <button
+            onClick={onEnter}
+            className="group flex items-center gap-2 px-7 py-3.5 text-white font-semibold rounded-xl transition-all active:scale-95"
+            style={{
+              background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
+              boxShadow: '0 0 0 1px rgba(99,102,241,0.5), 0 20px 40px rgba(99,102,241,0.3)',
+              fontSize: 15,
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.boxShadow = '0 0 0 1px rgba(99,102,241,0.7), 0 20px 60px rgba(99,102,241,0.5)';
+              (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.boxShadow = '0 0 0 1px rgba(99,102,241,0.5), 0 20px 40px rgba(99,102,241,0.3)';
+              (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+            }}
+          >
+            {/* Shimmer overlay */}
+            <span
+              style={{
+                position: 'absolute', inset: 0,
+                background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%)',
+                backgroundSize: '200% 100%',
+                animation: 'shimmer 2.5s linear infinite',
+              }}
+            />
+            <FileText size={16} />
+            Open Editor
+            <ArrowRight size={16} />
+          </button>
+
+          {/* Secondary */}
+          <button
+            onClick={onEnter}
+            className="flex items-center gap-2 px-7 py-3.5 font-semibold rounded-xl transition-all active:scale-95"
+            style={{
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              color: '#e2e8f0',
+              fontSize: 15,
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.1)';
+              (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)';
+              (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+            }}
+          >
+            Drop a PDF to start
+          </button>
+        </div>
+      </section>
+
+      {/* ── Feature grid ──────────────────────────────── */}
+      <section className="relative z-10 px-6 pb-24">
+        <div
+          style={{
+            maxWidth: 1000, margin: '0 auto',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+            gap: 16,
+          }}
+        >
+          {FEATURES.map((f, i) => (
             <div
-              key={f.label}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[#a1a1aa] border border-[#3f3f46] bg-[#18181b]"
-              style={{ fontFamily: PIXEL_FONT, fontSize: '0.45rem', letterSpacing: '0.04em' }}
+              key={f.title}
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.07)',
+                borderRadius: 16,
+                padding: '22px 20px',
+                cursor: 'default',
+                animation: entered ? 'card-in 0.7s ease both' : 'none',
+                animationDelay: `${0.35 + i * 0.06}s`,
+                transition: 'border-color 0.2s, background 0.2s, transform 0.2s',
+              }}
+              onMouseEnter={e => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.borderColor = 'rgba(99,102,241,0.4)';
+                el.style.background = 'rgba(99,102,241,0.06)';
+                el.style.transform = 'translateY(-3px)';
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.borderColor = 'rgba(255,255,255,0.07)';
+                el.style.background = 'rgba(255,255,255,0.03)';
+                el.style.transform = 'translateY(0)';
+              }}
             >
-              <span className="text-[#3b82f6]">{f.icon}</span>
-              {f.label}
+              {/* Icon */}
+              <div
+                style={{
+                  width: 40, height: 40, borderRadius: 10, marginBottom: 14,
+                  background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(59,130,246,0.2))',
+                  border: '1px solid rgba(99,102,241,0.2)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#818cf8',
+                }}
+              >
+                {f.icon}
+              </div>
+              <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: 14, marginBottom: 6 }}>
+                {f.title}
+              </div>
+              <div style={{ color: '#64748b', fontSize: 13, lineHeight: 1.6 }}>
+                {f.desc}
+              </div>
             </div>
           ))}
         </div>
+      </section>
 
-        {/* CTA button */}
-        <button
-          onClick={onEnter}
-          className="mt-2 px-8 py-4 bg-[#3b82f6] hover:bg-[#2563eb] text-white tracking-widest transition-colors duration-150 active:scale-95"
-          style={{
-            fontFamily: PIXEL_FONT,
-            fontSize: '0.72rem',
-            boxShadow: '4px 4px 0 #1e40af, 0 0 32px rgba(59,130,246,0.55)',
-            transition: 'background-color 0.15s, box-shadow 0.15s',
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.boxShadow =
-              '4px 4px 0 #1e40af, 0 0 64px rgba(59,130,246,0.95)';
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.boxShadow =
-              '4px 4px 0 #1e40af, 0 0 32px rgba(59,130,246,0.55)';
-          }}
-        >
-          [ OPEN EDITOR ]
-        </button>
-
-        {/* Press any key hint */}
-        <p
-          className="text-[#3f3f46] animate-pulse"
-          style={{ fontFamily: 'monospace', fontSize: '0.6rem', letterSpacing: '0.08em' }}
-        >
-          PRESS ANY KEY TO CONTINUE
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/** Small pixel-art document shape that floats upward */
-function PixelPage({ width }: { width: number }) {
-  const height = Math.round(width * 1.35);
-  const ear = Math.round(width * 0.28);
-  const lineCount = 4;
-
-  return (
-    <div
-      style={{
-        width,
-        height,
-        backgroundColor: '#18181b',
-        border: '2px solid #3f3f46',
-        position: 'relative',
-        boxShadow: '2px 2px 0 #27272a',
-        clipPath: `polygon(0 0, ${width - ear}px 0, ${width}px ${ear}px, ${width}px ${height}px, 0 ${height}px)`,
-      }}
-    >
-      {/* Dog-ear fold line */}
+      {/* ── Bottom bar ────────────────────────────────── */}
       <div
-        style={{
-          position: 'absolute',
-          top: 0, right: 0,
-          width: ear, height: ear,
-          borderLeft: '2px solid #3f3f46',
-          borderBottom: '2px solid #3f3f46',
-          backgroundColor: '#09090b',
-        }}
-      />
-      {/* Text lines */}
-      {Array.from({ length: lineCount }).map((_, i) => (
-        <div
-          key={i}
-          style={{
-            position: 'absolute',
-            left: '14%',
-            right: i % 2 === 0 ? '14%' : '30%',
-            top: `${28 + i * 17}%`,
-            height: Math.max(1, Math.round(width * 0.07)),
-            backgroundColor: '#3f3f46',
-            opacity: 0.7,
-          }}
-        />
-      ))}
+        className="relative z-10 mt-auto flex items-center justify-center py-6"
+        style={{ borderTop: '1px solid rgba(255,255,255,0.05)', color: '#334155', fontSize: 12 }}
+      >
+        Press any key to open the editor
+      </div>
     </div>
   );
 }
