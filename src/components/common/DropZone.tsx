@@ -10,7 +10,7 @@ interface DropZoneProps {
 
 export function DropZone({
   onFileSelect,
-  accept = '.pdf',
+  accept = 'application/pdf,.pdf',
   multiple = false,
   onMultipleFiles,
 }: DropZoneProps) {
