@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useId, useState } from 'react';
 import { Upload } from 'lucide-react';
 
 interface DropZoneProps {
@@ -15,6 +15,7 @@ export function DropZone({
   onMultipleFiles,
 }: DropZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const inputId = useId();
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -50,8 +51,9 @@ export function DropZone({
   );
 
   return (
-    <div
-      className={`flex flex-col items-center justify-center w-full h-full min-h-[400px] border-2 border-dashed rounded-xl transition-colors cursor-pointer ${
+    <label
+      htmlFor={inputId}
+      className={`flex flex-col items-center justify-center w-full h-full min-h-100 border-2 border-dashed rounded-xl transition-colors cursor-pointer ${
         isDragging
           ? 'border-accent bg-accent-dim'
           : 'border-border-moderate bg-surface-raised hover:border-zinc-500 hover:bg-surface-overlay'
@@ -62,7 +64,6 @@ export function DropZone({
       }}
       onDragLeave={() => setIsDragging(false)}
       onDrop={handleDrop}
-      onClick={() => document.getElementById('pdf-file-input')?.click()}
     >
       <Upload className="w-16 h-16 text-text-muted mb-4" />
       <p className="text-xl font-medium text-text-secondary mb-2">
@@ -70,13 +71,13 @@ export function DropZone({
       </p>
       <p className="text-sm text-text-muted">or click to browse files</p>
       <input
-        id="pdf-file-input"
+        id={inputId}
         type="file"
         accept={accept}
         multiple={multiple}
         onChange={handleFileInput}
         className="hidden"
       />
-    </div>
+    </label>
   );
 }
