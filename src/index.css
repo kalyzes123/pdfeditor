@@ -154,8 +154,10 @@ body {
     max-width: 100%;
   }
 
-  /* Stretch canvases to fill available width */
-  [data-page] canvas {
+  /* Stretch both the PDF canvas and the Fabric annotation container/canvas to
+     the same width so they scale proportionally and stay aligned. */
+  [data-page] canvas,
+  .annotation-canvas-container {
     width: 100% !important;
     height: auto !important;
     display: block;

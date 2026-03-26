@@ -9,11 +9,20 @@ const fontFamilies = [
 ];
 const fontSizes = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 64, 72];
 
+const TOOL_LABELS: Record<string, string> = {
+  text: 'Text', freehand: 'Draw', underline: 'Line', arrow: 'Arrow',
+  rectangle: 'Rectangle', circle: 'Circle', stamp: 'Stamp', eraser: 'Eraser',
+  redact: 'Redact', image: 'Image', signature: 'Signature',
+};
+
 export function PropertiesPanel() {
   const {
-    selectedObjectProps, currentPage,
+    selectedObjectProps, currentPage, activeTool,
+    activeColor, activeStrokeWidth, activeOpacity,
+    activeFontSize, activeFontFamily, activeFontBold, activeFontItalic,
+    activeFontUnderline, activeFontStrikethrough,
     setFontSize, setFontFamily, setFontBold, setFontItalic, setFontUnderline, setFontStrikethrough,
-    setColor, setOpacity,
+    setColor, setOpacity, setStrokeWidth,
   } = useUIStore();
 
   // When a text object is selected, sync its current properties into the store
@@ -35,7 +44,115 @@ export function PropertiesPanel() {
     annotationManagers.get(currentPage - 1)?.updateSelectedObject(props);
   }, [currentPage]);
 
-  if (!selectedObjectProps) return null;
+  // Show tool defaults when nothing is selected
+  if (!selectedObjectProps) {
+    const toolLabel = TOOL_LABELS[activeTool];
+    const showToolDefaults = !!toolLabel && activeTool !== 'eraser' && activeTool !== 'stamp' && activeTool !== 'image' && activeTool !== 'signature';
+    const showTextDefaults = activeTool === 'text';
+    const showStrokeDefaults = ['freehand', 'underline', 'arrow', 'rectangle', 'circle'].includes(activeTool);
+
+    return (
+      <div className="w-55 bg-surface-raised border-l border-border-subtle flex flex-col overflow-y-auto shrink-0">
+        <div className="px-4 py-2.5 border-b border-border-subtle text-[11px] font-semibold text-text-secondary uppercase tracking-widest">
+          {toolLabel ? `${toolLabel} Defaults` : 'Properties'}
+        </div>
+        {showToolDefaults ? (
+          <div className="flex flex-col gap-5 p-4">
+            {/* Color */}
+            <section className="flex flex-col gap-3">
+              <span className="text-[10px] text-text-muted font-semibold uppercase tracking-widest">Color</span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-text-secondary shrink-0">{showTextDefaults ? 'Text' : 'Stroke'}</span>
+                <input
+                  type="color"
+                  value={activeColor}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="w-8 h-7 rounded cursor-pointer border border-border-subtle bg-transparent p-0"
+                />
+              </div>
+            </section>
+
+            {/* Opacity */}
+            <section className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-text-muted font-semibold uppercase tracking-widest">Opacity</span>
+                <span className="text-xs font-medium text-text-primary tabular-nums">
+                  {Math.round(activeOpacity * 100)}%
+                </span>
+              </div>
+              <input
+                type="range" min={0.1} max={1} step={0.05}
+                value={activeOpacity}
+                onChange={(e) => setOpacity(Number(e.target.value))}
+                className="w-full accent-accent"
+              />
+            </section>
+
+            {/* Stroke width */}
+            {showStrokeDefaults && (
+              <section className="flex flex-col gap-3">
+                <span className="text-[10px] text-text-muted font-semibold uppercase tracking-widest">Stroke</span>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-text-secondary shrink-0">Width</span>
+                  <input
+                    type="number" min={1} max={20}
+                    value={activeStrokeWidth}
+                    onChange={(e) => setStrokeWidth(Number(e.target.value))}
+                    className="w-14 text-xs text-right bg-surface-overlay border border-border-subtle rounded px-2 py-1 text-text-primary focus:outline-none"
+                  />
+                </div>
+              </section>
+            )}
+
+            {/* Text defaults */}
+            {showTextDefaults && (
+              <section className="flex flex-col gap-3">
+                <span className="text-[10px] text-text-muted font-semibold uppercase tracking-widest">Text</span>
+                <select
+                  value={activeFontFamily}
+                  onChange={(e) => setFontFamily(e.target.value)}
+                  className="w-full text-xs bg-surface-overlay border border-border-subtle rounded px-2 py-1.5 text-text-primary focus:outline-none"
+                >
+                  {fontFamilies.map((f) => <option key={f} value={f}>{f}</option>)}
+                </select>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-text-secondary shrink-0">Size</span>
+                  <select
+                    value={activeFontSize}
+                    onChange={(e) => setFontSize(Number(e.target.value))}
+                    className="flex-1 text-xs bg-surface-overlay border border-border-subtle rounded px-2 py-1.5 text-text-primary focus:outline-none"
+                  >
+                    {fontSizes.map((s) => <option key={s} value={s}>{s}px</option>)}
+                  </select>
+                </div>
+                <div className="flex gap-1">
+                  {([
+                    { icon: <Bold size={13} />, title: 'Bold', active: activeFontBold, onClick: () => setFontBold(!activeFontBold) },
+                    { icon: <Italic size={13} />, title: 'Italic', active: activeFontItalic, onClick: () => setFontItalic(!activeFontItalic) },
+                    { icon: <Underline size={13} />, title: 'Underline', active: activeFontUnderline, onClick: () => setFontUnderline(!activeFontUnderline) },
+                    { icon: <Strikethrough size={13} />, title: 'Strikethrough', active: activeFontStrikethrough, onClick: () => setFontStrikethrough(!activeFontStrikethrough) },
+                  ] as const).map((btn) => (
+                    <button
+                      key={btn.title}
+                      onClick={btn.onClick}
+                      title={btn.title}
+                      className={`flex-1 py-1.5 rounded text-xs transition-colors flex items-center justify-center ${btn.active ? 'bg-accent-dim text-accent' : 'text-text-muted hover:bg-surface-overlay hover:text-text-primary'}`}
+                    >
+                      {btn.icon}
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center flex-1 p-4">
+            <p className="text-[11px] text-text-muted text-center">Select an object to edit its properties</p>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   const { type, fill, stroke, strokeWidth, opacity, fontSize, fontFamily, fontWeight, fontStyle, underline, linethrough } = selectedObjectProps;
 
