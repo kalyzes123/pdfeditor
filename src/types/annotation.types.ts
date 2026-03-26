@@ -10,7 +10,8 @@ export type AnnotationTool =
   | 'eraser'
   | 'arrow'
   | 'stamp'
-  | 'image';
+  | 'image'
+  | 'redact';
 
 export interface PageAnnotations {
   pageIndex: number;

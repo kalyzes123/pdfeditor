@@ -215,6 +215,10 @@ export class AnnotationManager {
       case 'image':
         this.setupImageTool();
         break;
+
+      case 'redact':
+        this.setupRedactTool();
+        break;
     }
   }
 
@@ -421,6 +425,9 @@ export class AnnotationManager {
           this.canvas!.remove(rect);
         } else {
           rect.set({ selectable: true, evented: true });
+          rect.setCoords();
+          this.canvas!.setActiveObject(rect);
+          useUIStore.getState().setTool('select');
         }
       }
       isDown = false;
@@ -458,9 +465,13 @@ export class AnnotationManager {
       const pointer = this.canvas!.getScenePoint(o.e as MouseEvent);
       startX = pointer.x;
       startY = pointer.y;
+      // Use center origin so left/top always refer to the center of the ellipse,
+      // preventing the reversed-position bug when dragging in any direction.
       ellipse = new fabric.Ellipse({
         left: startX,
         top: startY,
+        originX: 'center',
+        originY: 'center',
         rx: 0,
         ry: 0,
         fill,
@@ -476,12 +487,11 @@ export class AnnotationManager {
     const onMove = (o: fabric.TEvent) => {
       if (!isDown || !ellipse) return;
       const pointer = this.canvas!.getScenePoint(o.e as MouseEvent);
-      ellipse.set({
-        rx: Math.abs(pointer.x - startX) / 2,
-        ry: Math.abs(pointer.y - startY) / 2,
-        left: Math.min(pointer.x, startX),
-        top: Math.min(pointer.y, startY),
-      });
+      const rx = Math.abs(pointer.x - startX) / 2;
+      const ry = Math.abs(pointer.y - startY) / 2;
+      const centerX = (startX + pointer.x) / 2;
+      const centerY = (startY + pointer.y) / 2;
+      ellipse.set({ rx, ry, left: centerX, top: centerY });
       this.canvas!.renderAll();
     };
 
@@ -491,6 +501,9 @@ export class AnnotationManager {
           this.canvas!.remove(ellipse);
         } else {
           ellipse.set({ selectable: true, evented: true });
+          ellipse.setCoords();
+          this.canvas!.setActiveObject(ellipse);
+          useUIStore.getState().setTool('select');
         }
       }
       isDown = false;
@@ -706,11 +719,13 @@ export class AnnotationManager {
     if (!this.canvas) return;
     this.canvas.defaultCursor = 'pointer';
 
-    // Make all objects respond to clicks but show pointer cursor
+    // Make all objects respond to clicks but show pointer cursor.
+    // setCoords() ensures hit-testing bounding boxes are up-to-date.
     this.canvas.forEachObject((obj) => {
       obj.selectable = false;
       obj.evented = true;
       obj.hoverCursor = 'pointer';
+      obj.setCoords();
     });
 
     const handler = (e: fabric.TEvent) => {
@@ -725,6 +740,74 @@ export class AnnotationManager {
 
     this.canvas.on('mouse:down', handler);
     this.cleanupListeners.push(() => this.canvas?.off('mouse:down', handler));
+  }
+
+  /** Redact tool: draw a white-filled rectangle to cover/hide content. */
+  private setupRedactTool(): void {
+    if (!this.canvas) return;
+    this.canvas.defaultCursor = 'crosshair';
+
+    let isDown = false;
+    let startX = 0;
+    let startY = 0;
+    let rect: fabric.Rect | null = null;
+
+    const onDown = (o: fabric.TEvent) => {
+      if ((o as fabric.TEvent & { target?: fabric.FabricObject }).target) return;
+      isDown = true;
+      const pointer = this.canvas!.getScenePoint(o.e as MouseEvent);
+      startX = pointer.x;
+      startY = pointer.y;
+      rect = new fabric.Rect({
+        left: startX,
+        top: startY,
+        width: 0,
+        height: 0,
+        fill: '#ffffff',
+        stroke: '#d4d4d8',
+        strokeWidth: 1,
+        selectable: false,
+        evented: false,
+      });
+      this.canvas!.add(rect);
+    };
+
+    const onMove = (o: fabric.TEvent) => {
+      if (!isDown || !rect) return;
+      const pointer = this.canvas!.getScenePoint(o.e as MouseEvent);
+      rect.set({
+        width: Math.abs(pointer.x - startX),
+        height: Math.abs(pointer.y - startY),
+        left: Math.min(pointer.x, startX),
+        top: Math.min(pointer.y, startY),
+      });
+      this.canvas!.renderAll();
+    };
+
+    const onUp = () => {
+      if (rect) {
+        if ((rect.width ?? 0) < 3 && (rect.height ?? 0) < 3) {
+          this.canvas!.remove(rect);
+        } else {
+          rect.set({ selectable: true, evented: true });
+          rect.setCoords();
+          this.canvas!.setActiveObject(rect);
+          useUIStore.getState().setTool('select');
+        }
+      }
+      isDown = false;
+      rect = null;
+    };
+
+    this.canvas.on('mouse:down', onDown);
+    this.canvas.on('mouse:move', onMove);
+    this.canvas.on('mouse:up', onUp);
+
+    this.cleanupListeners.push(() => {
+      this.canvas?.off('mouse:down', onDown);
+      this.canvas?.off('mouse:move', onMove);
+      this.canvas?.off('mouse:up', onUp);
+    });
   }
 
   // FIX #5: Undo last eraser deletion
