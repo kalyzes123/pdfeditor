@@ -31,7 +31,7 @@ export function AppShell() {
   const handleOpenFile = useCallback(() => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'application/pdf,.pdf';
+    input.accept = '*/*';
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
