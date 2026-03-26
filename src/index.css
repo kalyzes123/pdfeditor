@@ -154,10 +154,12 @@ body {
     max-width: 100%;
   }
 
-  /* Stretch both the PDF canvas and the Fabric annotation container/canvas to
-     the same width so they scale proportionally and stay aligned. */
-  [data-page] canvas,
-  .annotation-canvas-container {
+  /* Stretch the annotation container, Fabric's inner .canvas-container wrapper,
+     and all canvases to the same width so PDF background and annotations scale
+     proportionally and stay aligned when printed. */
+  .annotation-canvas-container,
+  .annotation-canvas-container .canvas-container,
+  [data-page] canvas {
     width: 100% !important;
     height: auto !important;
     display: block;
