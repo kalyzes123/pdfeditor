@@ -24,7 +24,8 @@ export function PDFPage({ pageIndex, scale }: PDFPageProps) {
   const [pendingComment, setPendingComment] = useState<CommentHighlightPayload | null>(null);
   const [activePopupId, setActivePopupId] = useState<string | null>(null);
 
-  const comments = useAnnotationStore((s) => s.comments.filter((c) => c.pageIndex === pageIndex));
+  const allComments = useAnnotationStore((s) => s.comments);
+  const comments = allComments.filter((c) => c.pageIndex === pageIndex);
   const addComment = useAnnotationStore((s) => s.addComment);
   const updateComment = useAnnotationStore((s) => s.updateComment);
   const deleteComment = useAnnotationStore((s) => s.deleteComment);
