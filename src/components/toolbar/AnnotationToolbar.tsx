@@ -13,6 +13,7 @@ import {
   Stamp,
   Image,
   Scissors,
+  MessageSquare,
 } from 'lucide-react';
 import { useUIStore } from '../../store/uiStore';
 import type { AnnotationTool } from '../../types/annotation.types';
@@ -31,6 +32,7 @@ const tools: { tool: AnnotationTool; icon: React.ReactNode; label: string; short
   { tool: 'eraser', icon: <Eraser size={18} />, label: 'Eraser', shortcut: 'E' },
   { tool: 'redact' as AnnotationTool, icon: <Scissors size={18} />, label: 'Redact' },
   { tool: 'image' as AnnotationTool, icon: <Image size={18} />, label: 'Insert Image' },
+  { tool: 'comment' as AnnotationTool, icon: <MessageSquare size={18} />, label: 'Comment' },
 ];
 
 const stampLabels = ['APPROVED', 'REJECTED', 'DRAFT', 'CONFIDENTIAL', 'FOR REVIEW', 'VOID'];

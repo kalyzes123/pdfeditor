@@ -129,7 +129,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
 
   mergeDocuments: async (files: File[]) => {
     const allBytes: Uint8Array[] = [];
-    const { rawBytes } = get();
+    const { rawBytes, fileName } = get();
 
     if (rawBytes) {
       allBytes.push(rawBytes);
@@ -142,7 +142,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
 
     const mergedBytes = await pdfManipulator.mergeDocuments(allBytes);
     useAnnotationStore.getState().clearAll();
-    await get().loadFromBytes(mergedBytes, 'merged.pdf');
+    await get().loadFromBytes(mergedBytes, fileName);
     set({ isModified: true });
   },
 

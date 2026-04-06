@@ -9,6 +9,8 @@ import {
   Printer,
   Undo2,
   Redo2,
+  FilePlus2,
+  Scissors,
 } from 'lucide-react';
 import { useUIStore } from '../../store/uiStore';
 import { useDocumentStore } from '../../store/documentStore';
@@ -24,7 +26,7 @@ interface ToolbarProps {
 }
 
 export function Toolbar({ onOpenFile, onSave, onClose }: ToolbarProps) {
-  const { sidebarOpen, toggleSidebar, currentPage, activeTool } = useUIStore();
+  const { sidebarOpen, toggleSidebar, currentPage, activeTool, openDialog } = useUIStore();
   const { isDocumentLoaded, isModified, fileName, setFileName } = useDocumentStore();
   const { undo, redo, canUndo, canRedo } = useAnnotationStore();
 
@@ -126,6 +128,27 @@ export function Toolbar({ onOpenFile, onSave, onClose }: ToolbarProps) {
               onClick={() => window.print()}
             >
               Print
+            </Button>
+
+            <div className="w-px h-5 bg-border-subtle" />
+
+            <Button
+              icon={<FilePlus2 size={16} />}
+              variant="ghost"
+              size="sm"
+              onClick={() => openDialog('merge')}
+              title="Merge another PDF into this document"
+            >
+              Merge
+            </Button>
+            <Button
+              icon={<Scissors size={16} />}
+              variant="ghost"
+              size="sm"
+              onClick={() => openDialog('split')}
+              title="Split this document into multiple files"
+            >
+              Split
             </Button>
           </>
         )}

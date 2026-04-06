@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { AnnotationTool } from '../types/annotation.types';
 import { useDocumentStore } from './documentStore';
 
-type DialogName = 'signature';
+type DialogName = 'signature' | 'merge' | 'split';
 type DialogKeys = `${DialogName}DialogOpen`;
 
 export interface ToastMessage {
@@ -56,6 +56,8 @@ interface UIStore {
   isLoading: boolean;
   loadingMessage: string;
   signatureDialogOpen: boolean;
+  mergeDialogOpen: boolean;
+  splitDialogOpen: boolean;
   viewerContainerWidth: number;
   viewerContainerHeight: number;
   scrollTargetPage: number | null;
@@ -125,6 +127,8 @@ export const useUIStore = create<UIStore>((set, get) => ({
   isLoading: false,
   loadingMessage: '',
   signatureDialogOpen: false,
+  mergeDialogOpen: false,
+  splitDialogOpen: false,
   viewerContainerWidth: 0,
   viewerContainerHeight: 0,
   scrollTargetPage: null,

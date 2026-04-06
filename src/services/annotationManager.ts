@@ -17,6 +17,12 @@ interface ToolOptions {
   signatureDataURL?: string;
 }
 
+export interface CommentHighlightPayload {
+  commentId: string;
+  bounds: { x: number; y: number; width: number; height: number };
+  fabricObjectId: string;
+}
+
 export class AnnotationManager {
   private canvas: fabric.Canvas | null = null;
   private onChangeCallback: (json: object) => void;
@@ -26,6 +32,9 @@ export class AnnotationManager {
   private deletedStack: fabric.FabricObject[] = [];
   private currentWidth = 1;
   private currentHeight = 1;
+
+  /** Called when the user finishes drawing a comment highlight. */
+  onCommentHighlightCreated?: (payload: CommentHighlightPayload) => void;
   constructor(onChange: (json: object) => void) {
     this.onChangeCallback = onChange;
   }
@@ -218,6 +227,10 @@ export class AnnotationManager {
 
       case 'redact':
         this.setupRedactTool();
+        break;
+
+      case 'comment':
+        this.setupCommentTool();
         break;
     }
   }
@@ -808,6 +821,105 @@ export class AnnotationManager {
       this.canvas?.off('mouse:move', onMove);
       this.canvas?.off('mouse:up', onUp);
     });
+  }
+
+  private setupCommentTool(): void {
+    if (!this.canvas) return;
+    this.canvas.defaultCursor = 'crosshair';
+
+    let isDown = false;
+    let startX = 0;
+    let startY = 0;
+    let rect: fabric.Rect | null = null;
+
+    const onDown = (o: fabric.TEvent) => {
+      if ((o as fabric.TEvent & { target?: fabric.FabricObject }).target) return;
+      isDown = true;
+      const pointer = this.canvas!.getScenePoint(o.e as MouseEvent);
+      startX = pointer.x;
+      startY = pointer.y;
+      rect = new fabric.Rect({
+        left: startX,
+        top: startY,
+        width: 0,
+        height: 0,
+        fill: 'rgba(255,220,0,0.35)',
+        stroke: 'rgba(255,180,0,0.7)',
+        strokeWidth: 1,
+        selectable: false,
+        evented: false,
+      });
+      (rect as unknown as Record<string, unknown>).data = { type: 'comment-highlight', commentId: null };
+      this.canvas!.add(rect);
+    };
+
+    const onMove = (o: fabric.TEvent) => {
+      if (!isDown || !rect) return;
+      const pointer = this.canvas!.getScenePoint(o.e as MouseEvent);
+      rect.set({
+        width: Math.abs(pointer.x - startX),
+        height: Math.abs(pointer.y - startY),
+        left: Math.min(pointer.x, startX),
+        top: Math.min(pointer.y, startY),
+      });
+      this.canvas!.renderAll();
+    };
+
+    const onUp = () => {
+      if (!rect) { isDown = false; return; }
+      const w = rect.width ?? 0;
+      const h = rect.height ?? 0;
+
+      if (w < 5 || h < 5) {
+        this.canvas!.remove(rect);
+      } else {
+        const commentId = crypto.randomUUID();
+        const fabricObjectId = rect.get('id' as keyof fabric.Rect) as string ?? commentId;
+        const bounds = {
+          x: rect.left ?? 0,
+          y: rect.top ?? 0,
+          width: w,
+          height: h,
+        };
+        (rect as unknown as Record<string, unknown>).data = {
+          type: 'comment-highlight',
+          commentId,
+        };
+        // Give the object a stable id for later lookup
+        (rect as unknown as Record<string, unknown>)._commentId = commentId;
+        rect.set({ selectable: false, evented: false });
+        this.canvas!.renderAll();
+
+        if (this.onCommentHighlightCreated) {
+          this.onCommentHighlightCreated({ commentId, bounds, fabricObjectId });
+        }
+      }
+
+      isDown = false;
+      rect = null;
+    };
+
+    this.canvas.on('mouse:down', onDown);
+    this.canvas.on('mouse:move', onMove);
+    this.canvas.on('mouse:up', onUp);
+
+    this.cleanupListeners.push(() => {
+      this.canvas?.off('mouse:down', onDown);
+      this.canvas?.off('mouse:move', onMove);
+      this.canvas?.off('mouse:up', onUp);
+    });
+  }
+
+  removeCommentHighlight(commentId: string): void {
+    if (!this.canvas) return;
+    const target = this.canvas.getObjects().find((obj) => {
+      const d = (obj as unknown as Record<string, unknown>)._commentId;
+      return d === commentId;
+    });
+    if (target) {
+      this.canvas.remove(target);
+      this.canvas.renderAll();
+    }
   }
 
   // FIX #5: Undo last eraser deletion

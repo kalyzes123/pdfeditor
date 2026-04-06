@@ -1,10 +1,11 @@
 import { create } from 'zustand';
-import type { PageAnnotations, StickyNote } from '../types/annotation.types';
+import type { PageAnnotations, StickyNote, Comment } from '../types/annotation.types';
 import type { SignatureData } from '../types/signature.types';
 
 interface AnnotationStore {
   annotations: Record<number, PageAnnotations>;
   stickyNotes: StickyNote[];
+  comments: Comment[];
   savedSignatures: SignatureData[];
   history: Record<number, object[]>;
   historyIndex: Record<number, number>;
@@ -27,6 +28,9 @@ interface AnnotationStore {
   addStickyNote: (note: Omit<StickyNote, 'id' | 'createdAt'>) => void;
   updateStickyNote: (id: string, content: string) => void;
   deleteStickyNote: (id: string) => void;
+  addComment: (comment: Omit<Comment, 'id' | 'createdAt'>) => void;
+  updateComment: (id: string, text: string) => void;
+  deleteComment: (id: string) => void;
   addSignature: (sig: Omit<SignatureData, 'id'>) => void;
   deleteSignature: (id: string) => void;
   canUndo: (pageIndex: number) => boolean;
@@ -46,6 +50,7 @@ const genId = () => `ann_${++nextId}_${Date.now()}`;
 export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
   annotations: {},
   stickyNotes: [],
+  comments: [],
   savedSignatures: [],
   history: {},
   historyIndex: {},
@@ -152,6 +157,24 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
       stickyNotes: s.stickyNotes.filter((n) => n.id !== id),
     })),
 
+  addComment: (comment) =>
+    set((s) => ({
+      comments: [
+        ...s.comments,
+        { ...comment, id: genId(), createdAt: new Date().toISOString() },
+      ],
+    })),
+
+  updateComment: (id, text) =>
+    set((s) => ({
+      comments: s.comments.map((c) => (c.id === id ? { ...c, text } : c)),
+    })),
+
+  deleteComment: (id) =>
+    set((s) => ({
+      comments: s.comments.filter((c) => c.id !== id),
+    })),
+
   addSignature: (sig) =>
     set((s) => ({
       savedSignatures: [...s.savedSignatures, { ...sig, id: genId() }],
@@ -255,6 +278,7 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
     set({
       annotations: {},
       stickyNotes: [],
+      comments: [],
       history: {},
       historyIndex: {},
       formHistory: {},
