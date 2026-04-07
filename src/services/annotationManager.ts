@@ -744,6 +744,9 @@ export class AnnotationManager {
     const handler = (e: fabric.TEvent) => {
       const target = (e as fabric.TEvent & { target?: fabric.FabricObject }).target;
       if (target && this.canvas) {
+        // Don't erase comment highlight rects — they're managed by the comment system
+        const data = (target as unknown as Record<string, unknown>).data as { type?: string } | undefined;
+        if (data?.type === 'comment-highlight') return;
         // Store for undo
         this.deletedStack.push(target);
         this.canvas.remove(target);
@@ -849,7 +852,28 @@ export class AnnotationManager {
       // Only place a comment on a clean click (ignore accidental micro-drags)
       if (dx < 8 && dy < 8) {
         const commentId = crypto.randomUUID();
-        const bounds = { x: startX, y: startY, width: 0, height: 0 };
+
+        // Draw a small yellow highlight at the click point so the comment is visually anchored
+        const hlRect = new fabric.Rect({
+          left: startX - 10,
+          top: startY - 6,
+          width: 20,
+          height: 12,
+          fill: 'rgba(255, 220, 0, 0.5)',
+          stroke: 'rgba(200, 160, 0, 0.6)',
+          strokeWidth: 1,
+          selectable: false,
+          evented: false,
+        });
+        (hlRect as unknown as Record<string, unknown>)._commentId = commentId;
+        (hlRect as unknown as Record<string, unknown>).data = { type: 'comment-highlight' };
+        this.canvas!.add(hlRect);
+        this.canvas!.renderAll();
+
+        // Convert from canvas-pixel coords (zoomed) to natural (unscaled) coords
+        // so repositioning works correctly when zoom changes.
+        const zoom = useUIStore.getState().zoom;
+        const bounds = { x: startX / zoom, y: startY / zoom, width: 0, height: 0 };
         if (this.onCommentHighlightCreated) {
           this.onCommentHighlightCreated({ commentId, bounds, fabricObjectId: commentId });
         }
