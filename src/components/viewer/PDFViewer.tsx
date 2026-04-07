@@ -5,11 +5,23 @@ import { PDFPage } from './PDFPage';
 
 export function PDFViewer() {
   const { pageCount, pages: pagesMeta } = useDocumentStore();
+  const docVersion = useDocumentStore((s) => s.docVersion);
   const {
     zoom, setCurrentPage, setViewerDimensions,
     scrollTargetPage, clearScrollTarget,
     searchResults, currentMatchIndex,
+    fitToWidth, viewerContainerWidth,
   } = useUIStore();
+
+  // Auto-fit to width when a new document loads and the container width is known.
+  // Uses docVersion (increments on every loadFromBytes) so this re-fires on merge/split too.
+  const lastFittedDocVersion = useRef(-1);
+  useEffect(() => {
+    if (docVersion > 0 && viewerContainerWidth && docVersion !== lastFittedDocVersion.current) {
+      lastFittedDocVersion.current = docVersion;
+      fitToWidth();
+    }
+  }, [docVersion, viewerContainerWidth, fitToWidth]);
   const containerRef = useRef<HTMLDivElement>(null);
   const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
