@@ -830,7 +830,6 @@ export class AnnotationManager {
     let isDown = false;
     let startX = 0;
     let startY = 0;
-    let rect: fabric.Rect | null = null;
 
     const onDown = (o: fabric.TEvent) => {
       if ((o as fabric.TEvent & { target?: fabric.FabricObject }).target) return;
@@ -838,74 +837,30 @@ export class AnnotationManager {
       const pointer = this.canvas!.getScenePoint(o.e as MouseEvent);
       startX = pointer.x;
       startY = pointer.y;
-      rect = new fabric.Rect({
-        left: startX,
-        top: startY,
-        width: 0,
-        height: 0,
-        fill: 'rgba(255,220,0,0.35)',
-        stroke: 'rgba(255,180,0,0.7)',
-        strokeWidth: 1,
-        selectable: false,
-        evented: false,
-      });
-      (rect as unknown as Record<string, unknown>).data = { type: 'comment-highlight', commentId: null };
-      this.canvas!.add(rect);
     };
 
-    const onMove = (o: fabric.TEvent) => {
-      if (!isDown || !rect) return;
+    const onUp = (o: fabric.TEvent) => {
+      if (!isDown) return;
+      isDown = false;
       const pointer = this.canvas!.getScenePoint(o.e as MouseEvent);
-      rect.set({
-        width: Math.abs(pointer.x - startX),
-        height: Math.abs(pointer.y - startY),
-        left: Math.min(pointer.x, startX),
-        top: Math.min(pointer.y, startY),
-      });
-      this.canvas!.renderAll();
-    };
+      const dx = Math.abs(pointer.x - startX);
+      const dy = Math.abs(pointer.y - startY);
 
-    const onUp = () => {
-      if (!rect) { isDown = false; return; }
-      const w = rect.width ?? 0;
-      const h = rect.height ?? 0;
-
-      if (w < 5 || h < 5) {
-        this.canvas!.remove(rect);
-      } else {
+      // Only place a comment on a clean click (ignore accidental micro-drags)
+      if (dx < 8 && dy < 8) {
         const commentId = crypto.randomUUID();
-        const fabricObjectId = rect.get('id' as keyof fabric.Rect) as string ?? commentId;
-        const bounds = {
-          x: rect.left ?? 0,
-          y: rect.top ?? 0,
-          width: w,
-          height: h,
-        };
-        (rect as unknown as Record<string, unknown>).data = {
-          type: 'comment-highlight',
-          commentId,
-        };
-        // Give the object a stable id for later lookup
-        (rect as unknown as Record<string, unknown>)._commentId = commentId;
-        rect.set({ selectable: false, evented: false });
-        this.canvas!.renderAll();
-
+        const bounds = { x: startX, y: startY, width: 0, height: 0 };
         if (this.onCommentHighlightCreated) {
-          this.onCommentHighlightCreated({ commentId, bounds, fabricObjectId });
+          this.onCommentHighlightCreated({ commentId, bounds, fabricObjectId: commentId });
         }
       }
-
-      isDown = false;
-      rect = null;
     };
 
     this.canvas.on('mouse:down', onDown);
-    this.canvas.on('mouse:move', onMove);
     this.canvas.on('mouse:up', onUp);
 
     this.cleanupListeners.push(() => {
       this.canvas?.off('mouse:down', onDown);
-      this.canvas?.off('mouse:move', onMove);
       this.canvas?.off('mouse:up', onUp);
     });
   }

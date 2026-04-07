@@ -16,9 +16,9 @@ export function CommentInput({ bounds, scale, onSubmit, onCancel }: CommentInput
     textareaRef.current?.focus();
   }, []);
 
-  // Position to the right of the highlight, clamped so it doesn't overflow
-  const left = (bounds.x + bounds.width) * scale + 8;
-  const top = bounds.y * scale;
+  // Position just to the right of the click point, slightly below so the pin is visible
+  const left = bounds.x * scale + 16;
+  const top = bounds.y * scale - 4;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') { e.stopPropagation(); onCancel(); }

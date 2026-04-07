@@ -28,8 +28,9 @@ export function CommentPopup({ comment, scale, onClose, onEdit, onDelete }: Comm
   }, [editing]);
 
   const { highlightBounds: b } = comment;
-  const left = (b.x + b.width) * scale + 8;
-  const top = b.y * scale;
+  // Position just right of the pin icon (which is at b.x * scale - 12)
+  const left = b.x * scale + 16;
+  const top = b.y * scale - 4;
 
   const handleDelete = () => {
     showConfirm('Delete this comment?', () => onDelete(comment.id));
