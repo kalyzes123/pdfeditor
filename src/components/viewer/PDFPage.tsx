@@ -5,7 +5,7 @@ import { TextLayer } from './TextLayer';
 import { AnnotationLayer } from './AnnotationLayer';
 import { annotationManagers } from '../../services/annotationRegistry';
 import { useAnnotationStore } from '../../store/annotationStore';
-import type { CommentHighlightPayload } from '../../services/annotationManager';
+import { useUIStore } from '../../store/uiStore';
 import { CommentIcon } from '../annotations/CommentIcon';
 import { CommentInput } from '../annotations/CommentInput';
 import { CommentPopup } from '../annotations/CommentPopup';
@@ -15,15 +15,22 @@ interface PDFPageProps {
   scale: number;
 }
 
+interface PendingComment {
+  commentId: string;
+  bounds: { x: number; y: number; width: number; height: number };
+  fabricObjectId: string;
+}
+
 export function PDFPage({ pageIndex, scale }: PDFPageProps) {
   const [dimensions, setDimensions] = useState<{
     width: number;
     height: number;
   } | null>(null);
 
-  const [pendingComment, setPendingComment] = useState<CommentHighlightPayload | null>(null);
+  const [pendingComment, setPendingComment] = useState<PendingComment | null>(null);
   const [activePopupId, setActivePopupId] = useState<string | null>(null);
 
+  const activeTool = useUIStore((s) => s.activeTool);
   const allComments = useAnnotationStore((s) => s.comments);
   const comments = allComments.filter((c) => c.pageIndex === pageIndex);
   const addComment = useAnnotationStore((s) => s.addComment);
@@ -46,20 +53,49 @@ export function PDFPage({ pageIndex, scale }: PDFPageProps) {
     return () => { cancelled = true; };
   }, [pageIndex, scale]);
 
-  // Wire onCommentHighlightCreated callback once AnnotationLayer has mounted
-  useEffect(() => {
-    if (!dimensions) return;
+  // Detect text selection on mouseup when comment tool is active.
+  // The Fabric canvas is transparent to pointer events in this mode (see AnnotationLayer),
+  // so the browser's native text selection works normally.
+  const handleMouseUp = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (activeTool !== 'comment') return;
+
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    const pageEl = e.currentTarget;
+
+    // Only handle selections within this page
+    if (!pageEl.contains(range.commonAncestorContainer)) return;
+
+    const pageRect = pageEl.getBoundingClientRect();
+    const selRect = range.getBoundingClientRect();
+
+    if (selRect.width < 2 && selRect.height < 2) return;
+
+    // Canvas-pixel coords (page-relative, same coordinate space as Fabric canvas at 0,0)
+    const canvasBounds = {
+      x: selRect.left - pageRect.left,
+      y: selRect.top - pageRect.top,
+      width: selRect.width,
+      height: selRect.height,
+    };
+
+    // Natural (unscaled) coords for storage — CommentIcon/Input/Popup multiply by scale
+    const naturalBounds = {
+      x: canvasBounds.x / scale,
+      y: canvasBounds.y / scale,
+      width: canvasBounds.width / scale,
+      height: canvasBounds.height / scale,
+    };
+
+    const commentId = crypto.randomUUID();
     const manager = annotationManagers.get(pageIndex);
-    if (!manager) return;
+    manager?.addCommentHighlight(commentId, canvasBounds);
 
-    manager.onCommentHighlightCreated = (payload) => {
-      setPendingComment(payload);
-    };
-
-    return () => {
-      if (manager) manager.onCommentHighlightCreated = undefined;
-    };
-  }, [pageIndex, dimensions]);
+    setPendingComment({ commentId, bounds: naturalBounds, fabricObjectId: commentId });
+    selection.removeAllRanges();
+  }, [activeTool, pageIndex, scale]);
 
   const handleCommentSubmit = useCallback((text: string) => {
     if (!pendingComment) return;
@@ -106,6 +142,7 @@ export function PDFPage({ pageIndex, scale }: PDFPageProps) {
         width: dimensions.width,
         height: dimensions.height,
       }}
+      onMouseUp={handleMouseUp}
     >
       <CanvasLayer pageIndex={pageIndex} scale={scale} />
       <TextLayer pageIndex={pageIndex} scale={scale} />

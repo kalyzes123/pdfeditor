@@ -827,66 +827,34 @@ export class AnnotationManager {
   }
 
   private setupCommentTool(): void {
+    // Canvas pointer-events are disabled when comment tool is active (AnnotationLayer).
+    // Text selection and highlight drawing are handled at the PDFPage level via
+    // onMouseUp → addCommentHighlight(). Nothing to set up on the Fabric side.
     if (!this.canvas) return;
-    this.canvas.defaultCursor = 'crosshair';
+    this.canvas.defaultCursor = 'text';
+  }
 
-    let isDown = false;
-    let startX = 0;
-    let startY = 0;
-
-    const onDown = (o: fabric.TEvent) => {
-      if ((o as fabric.TEvent & { target?: fabric.FabricObject }).target) return;
-      isDown = true;
-      const pointer = this.canvas!.getScenePoint(o.e as MouseEvent);
-      startX = pointer.x;
-      startY = pointer.y;
-    };
-
-    const onUp = (o: fabric.TEvent) => {
-      if (!isDown) return;
-      isDown = false;
-      const pointer = this.canvas!.getScenePoint(o.e as MouseEvent);
-      const dx = Math.abs(pointer.x - startX);
-      const dy = Math.abs(pointer.y - startY);
-
-      // Only place a comment on a clean click (ignore accidental micro-drags)
-      if (dx < 8 && dy < 8) {
-        const commentId = crypto.randomUUID();
-
-        // Draw a small yellow highlight at the click point so the comment is visually anchored
-        const hlRect = new fabric.Rect({
-          left: startX - 10,
-          top: startY - 6,
-          width: 20,
-          height: 12,
-          fill: 'rgba(255, 220, 0, 0.5)',
-          stroke: 'rgba(200, 160, 0, 0.6)',
-          strokeWidth: 1,
-          selectable: false,
-          evented: false,
-        });
-        (hlRect as unknown as Record<string, unknown>)._commentId = commentId;
-        (hlRect as unknown as Record<string, unknown>).data = { type: 'comment-highlight' };
-        this.canvas!.add(hlRect);
-        this.canvas!.renderAll();
-
-        // Convert from canvas-pixel coords (zoomed) to natural (unscaled) coords
-        // so repositioning works correctly when zoom changes.
-        const zoom = useUIStore.getState().zoom;
-        const bounds = { x: startX / zoom, y: startY / zoom, width: 0, height: 0 };
-        if (this.onCommentHighlightCreated) {
-          this.onCommentHighlightCreated({ commentId, bounds, fabricObjectId: commentId });
-        }
-      }
-    };
-
-    this.canvas.on('mouse:down', onDown);
-    this.canvas.on('mouse:up', onUp);
-
-    this.cleanupListeners.push(() => {
-      this.canvas?.off('mouse:down', onDown);
-      this.canvas?.off('mouse:up', onUp);
+  /**
+   * Draw a yellow highlight rect on the canvas at the given bounds (canvas pixel coords,
+   * i.e. already scaled by zoom). Called from PDFPage after the user selects text.
+   */
+  addCommentHighlight(commentId: string, canvasBounds: { x: number; y: number; width: number; height: number }): void {
+    if (!this.canvas) return;
+    const hlRect = new fabric.Rect({
+      left: canvasBounds.x,
+      top: canvasBounds.y,
+      width: Math.max(canvasBounds.width, 4),
+      height: Math.max(canvasBounds.height, 4),
+      fill: 'rgba(255, 220, 0, 0.4)',
+      stroke: 'rgba(200, 160, 0, 0.5)',
+      strokeWidth: 1,
+      selectable: false,
+      evented: false,
     });
+    (hlRect as unknown as Record<string, unknown>)._commentId = commentId;
+    (hlRect as unknown as Record<string, unknown>).data = { type: 'comment-highlight' };
+    this.canvas.add(hlRect);
+    this.canvas.renderAll();
   }
 
   removeCommentHighlight(commentId: string): void {

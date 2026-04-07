@@ -149,8 +149,8 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
       className="annotation-canvas-container"
       style={{
         position: 'absolute', top: 0, left: 0, width, height, zIndex: 3,
-        // Pan mode: pass all pointer events through to the text/form layer below
-        pointerEvents: activeTool === 'pan' ? 'none' : 'auto',
+        // Pan + comment mode: pass all pointer events through so text is selectable
+        pointerEvents: (activeTool === 'pan' || activeTool === 'comment') ? 'none' : 'auto',
       }}
     >
       <canvas ref={canvasRef} />
