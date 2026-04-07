@@ -112,6 +112,14 @@ body {
   pointer-events: none;
 }
 
+/* Comment tool: enable text selection in the text layer */
+.comment-mode .textLayer,
+.comment-mode .textLayer > span {
+  pointer-events: auto;
+  user-select: text;
+  cursor: text;
+}
+
 .textLayer > span::selection {
   background: rgba(0, 0, 255, 0.3);
 }

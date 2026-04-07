@@ -137,7 +137,7 @@ export function PDFPage({ pageIndex, scale }: PDFPageProps) {
 
   return (
     <div
-      className="relative bg-white shadow-xl shadow-black/50"
+      className={`relative bg-white shadow-xl shadow-black/50${activeTool === 'comment' ? ' comment-mode' : ''}`}
       style={{
         width: dimensions.width,
         height: dimensions.height,
