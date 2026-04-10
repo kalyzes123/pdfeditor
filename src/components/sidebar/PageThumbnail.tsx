@@ -17,6 +17,7 @@ export function PageThumbnail({
 }: PageThumbnailProps) {
   const [thumbnail, setThumbnail] = useState<string>('');
   const currentPage = useUIStore((s) => s.currentPage);
+  const scrollToPage = useUIStore((s) => s.scrollToPage);
   const isActive = currentPage === pageIndex + 1;
 
   const {
@@ -59,6 +60,7 @@ export function PageThumbnail({
       className={`flex flex-col items-center gap-1 p-1.5 rounded-lg cursor-grab transition-colors ${
         isActive ? 'bg-accent-dim ring-2 ring-accent/60' : 'hover:bg-surface-overlay'
       }`}
+      onClick={() => scrollToPage(pageIndex + 1)}
       onContextMenu={handleContextMenu}
     >
       <div className="bg-zinc-800 border border-border-subtle rounded shadow-sm overflow-hidden">
