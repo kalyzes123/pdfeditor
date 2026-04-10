@@ -68,15 +68,20 @@ export function PDFPage({ pageIndex, scale }: PDFPageProps) {
     // Only handle selections within this page
     if (!pageEl.contains(range.commonAncestorContainer)) return;
 
-    const pageRect = pageEl.getBoundingClientRect();
     const selRect = range.getBoundingClientRect();
-
     if (selRect.width < 2 && selRect.height < 2) return;
+
+    // Use the textLayer as the reference origin — it is positioned at (0,0) inside the
+    // page div and is the same element whose spans define the text positions.
+    // This avoids any offset caused by box-shadow or border on the outer page div.
+    const textLayerEl = pageEl.querySelector('.textLayer') as HTMLElement | null;
+    const originEl = textLayerEl ?? pageEl;
+    const originRect = originEl.getBoundingClientRect();
 
     // Canvas-pixel coords (page-relative, same coordinate space as Fabric canvas at 0,0)
     const canvasBounds = {
-      x: selRect.left - pageRect.left,
-      y: selRect.top - pageRect.top,
+      x: selRect.left - originRect.left,
+      y: selRect.top - originRect.top,
       width: selRect.width,
       height: selRect.height,
     };

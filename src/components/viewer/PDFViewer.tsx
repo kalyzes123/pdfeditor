@@ -1,4 +1,5 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useDocumentStore } from '../../store/documentStore';
 import { useUIStore } from '../../store/uiStore';
 import { PDFPage } from './PDFPage';
@@ -36,8 +37,10 @@ export function PDFViewer() {
   // Before printing, force all pages to render so nothing is blank.
   useEffect(() => {
     const onBefore = () => {
-      setPrintMode(true);
-      setVisiblePages(new Set(Array.from({ length: pageCount }, (_, i) => i)));
+      flushSync(() => {
+        setPrintMode(true);
+        setVisiblePages(new Set(Array.from({ length: pageCount }, (_, i) => i)));
+      });
     };
     const onAfter = () => setPrintMode(false);
     window.addEventListener('beforeprint', onBefore);
