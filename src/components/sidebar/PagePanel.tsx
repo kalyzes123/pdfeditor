@@ -63,7 +63,7 @@ export function PagePanel() {
   );
 
   return (
-    <div className="w-[160px] bg-surface-raised border-r border-border-subtle flex flex-col">
+    <div className="w-[160px] h-full bg-surface-raised border-r border-border-subtle flex flex-col">
       {/* Tab strip */}
       <div className="flex border-b border-border-subtle shrink-0">
         {(['pages', 'outline'] as Tab[]).map((tab) => (
