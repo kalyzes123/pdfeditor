@@ -855,6 +855,12 @@ export class AnnotationManager {
     (hlRect as unknown as Record<string, unknown>).data = { type: 'comment-highlight' };
     this.canvas.add(hlRect);
     this.canvas.renderAll();
+    const br = hlRect.getBoundingRect();
+    console.log('[Fabric] canvas CSS size:', this.canvas.lowerCanvasEl?.style.width, this.canvas.lowerCanvasEl?.style.height);
+    console.log('[Fabric] canvas.width/height:', this.canvas.width, this.canvas.height);
+    console.log('[Fabric] currentWidth/Height:', this.currentWidth, this.currentHeight);
+    console.log('[Fabric] hlRect.left/top:', hlRect.left, hlRect.top);
+    console.log('[Fabric] hlRect getBoundingRect:', br);
   }
 
   removeCommentHighlight(commentId: string): void {
