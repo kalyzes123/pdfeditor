@@ -79,6 +79,12 @@ export function PDFPage({ pageIndex, scale }: PDFPageProps) {
     const fabricLowerCanvas = manager?.getCanvas()?.lowerCanvasEl;
     const originEl: Element = fabricLowerCanvas ?? (pageEl.querySelector('.textLayer') as HTMLElement | null) ?? pageEl;
     const originRect = originEl.getBoundingClientRect();
+    const pageRect = pageEl.getBoundingClientRect();
+
+    console.log('[Comment] selRect:', { left: selRect.left, top: selRect.top, width: selRect.width, height: selRect.height });
+    console.log('[Comment] pageRect:', { left: pageRect.left, top: pageRect.top });
+    console.log('[Comment] originRect (lowerCanvas):', { left: originRect.left, top: originRect.top });
+    console.log('[Comment] diff (origin - page):', { dx: originRect.left - pageRect.left, dy: originRect.top - pageRect.top });
 
     // Canvas-pixel coords (page-relative, same coordinate space as Fabric canvas at 0,0)
     const canvasBounds = {
@@ -87,6 +93,8 @@ export function PDFPage({ pageIndex, scale }: PDFPageProps) {
       width: selRect.width,
       height: selRect.height,
     };
+
+    console.log('[Comment] canvasBounds:', canvasBounds);
 
     // Natural (unscaled) coords for storage — CommentIcon/Input/Popup multiply by scale
     const naturalBounds = {
