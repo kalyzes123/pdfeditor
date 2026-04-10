@@ -71,11 +71,13 @@ export function PDFPage({ pageIndex, scale }: PDFPageProps) {
     const selRect = range.getBoundingClientRect();
     if (selRect.width < 2 && selRect.height < 2) return;
 
-    // Use the textLayer as the reference origin — it is positioned at (0,0) inside the
-    // page div and is the same element whose spans define the text positions.
-    // This avoids any offset caused by box-shadow or border on the outer page div.
-    const textLayerEl = pageEl.querySelector('.textLayer') as HTMLElement | null;
-    const originEl = textLayerEl ?? pageEl;
+    // Use the Fabric lower canvas element as the coordinate reference origin.
+    // It is the exact surface we draw highlight rects onto, so its getBoundingClientRect()
+    // gives the definitive (0,0) for Fabric object coordinates — unaffected by any CSS
+    // transforms or offsets that PDF.js may apply to the textLayer container.
+    const manager = annotationManagers.get(pageIndex);
+    const fabricLowerCanvas = manager?.getCanvas()?.lowerCanvasEl;
+    const originEl: Element = fabricLowerCanvas ?? (pageEl.querySelector('.textLayer') as HTMLElement | null) ?? pageEl;
     const originRect = originEl.getBoundingClientRect();
 
     // Canvas-pixel coords (page-relative, same coordinate space as Fabric canvas at 0,0)
@@ -95,7 +97,6 @@ export function PDFPage({ pageIndex, scale }: PDFPageProps) {
     };
 
     const commentId = crypto.randomUUID();
-    const manager = annotationManagers.get(pageIndex);
     manager?.addCommentHighlight(commentId, canvasBounds);
 
     setPendingComment({ commentId, bounds: naturalBounds, fabricObjectId: commentId });
