@@ -843,6 +843,8 @@ export class AnnotationManager {
     const hlRect = new fabric.Rect({
       left: canvasBounds.x,
       top: canvasBounds.y,
+      originX: 'left',
+      originY: 'top',
       width: Math.max(canvasBounds.width, 4),
       height: Math.max(canvasBounds.height, 4),
       fill: 'rgba(255, 220, 0, 0.4)',
@@ -855,12 +857,6 @@ export class AnnotationManager {
     (hlRect as unknown as Record<string, unknown>).data = { type: 'comment-highlight' };
     this.canvas.add(hlRect);
     this.canvas.renderAll();
-    const br = hlRect.getBoundingRect();
-    console.log('[Fabric] canvas CSS size:', this.canvas.lowerCanvasEl?.style.width, this.canvas.lowerCanvasEl?.style.height);
-    console.log('[Fabric] canvas.width/height:', this.canvas.width, this.canvas.height);
-    console.log('[Fabric] currentWidth/Height:', this.currentWidth, this.currentHeight);
-    console.log('[Fabric] hlRect.left/top:', hlRect.left, hlRect.top);
-    console.log('[Fabric] hlRect getBoundingRect:', br);
   }
 
   removeCommentHighlight(commentId: string): void {
