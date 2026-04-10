@@ -3,6 +3,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { pdfRenderer } from '../../services/pdfRenderer';
 import { useUIStore } from '../../store/uiStore';
+import { useDocumentStore } from '../../store/documentStore';
 
 interface PageThumbnailProps {
   pageIndex: number;
@@ -18,6 +19,7 @@ export function PageThumbnail({
   const [thumbnail, setThumbnail] = useState<string>('');
   const currentPage = useUIStore((s) => s.currentPage);
   const scrollToPage = useUIStore((s) => s.scrollToPage);
+  const docVersion = useDocumentStore((s) => s.docVersion);
   const isActive = currentPage === pageIndex + 1;
 
   const {
@@ -41,7 +43,7 @@ export function PageThumbnail({
       if (!cancelled) setThumbnail(dataUrl);
     }).catch(() => {});
     return () => { cancelled = true; };
-  }, [pageIndex]);
+  }, [pageIndex, docVersion]);
 
   const handleContextMenu = useCallback(
     (e: React.MouseEvent) => {
