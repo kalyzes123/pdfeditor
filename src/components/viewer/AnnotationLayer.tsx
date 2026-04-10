@@ -144,12 +144,24 @@ export function AnnotationLayer({ pageIndex, width, height }: AnnotationLayerPro
     activeStampLabel, pendingSignatureDataURL,
   ]);
 
+  // Fabric's wrapperEl has inline pointerEvents:'auto' which overrides the parent div.
+  // Manually set it so comment/pan mode truly passes events through to the text layer.
+  useEffect(() => {
+    const manager = managerRef.current;
+    if (!manager) return;
+    const canvas = manager.getCanvas();
+    if (!canvas) return;
+    const pe = (activeTool === 'pan' || activeTool === 'comment') ? 'none' : 'auto';
+    if (canvas.wrapperEl) canvas.wrapperEl.style.pointerEvents = pe;
+    if (canvas.upperCanvasEl) canvas.upperCanvasEl.style.pointerEvents = pe;
+    if (canvas.lowerCanvasEl) canvas.lowerCanvasEl.style.pointerEvents = pe;
+  }, [activeTool]);
+
   return (
     <div
       className="annotation-canvas-container"
       style={{
         position: 'absolute', top: 0, left: 0, width, height, zIndex: 3,
-        // Pan + comment mode: pass all pointer events through so text is selectable
         pointerEvents: (activeTool === 'pan' || activeTool === 'comment') ? 'none' : 'auto',
       }}
     >

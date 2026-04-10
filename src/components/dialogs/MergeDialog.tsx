@@ -100,7 +100,7 @@ export function MergeDialog() {
   };
 
   return (
-    <DialogBase title="Merge PDF" isOpen={mergeDialogOpen} onClose={handleClose}>
+    <DialogBase title="Merge PDF" isOpen={mergeDialogOpen} onClose={handleClose} width="max-w-2xl">
       <div className="flex flex-col gap-4">
         {/* Drop zone */}
         <div
@@ -115,10 +115,10 @@ export function MergeDialog() {
           onDrop={handleDrop}
         >
           <Upload size={24} className="mx-auto mb-2 text-text-muted" />
-          <p className="text-sm text-text-secondary">
+          <p className="text-base text-text-secondary">
             Drop PDF files here or <span className="text-accent">browse</span>
           </p>
-          <p className="text-xs text-text-muted mt-1">Files will be appended after the current document</p>
+          <p className="text-sm text-text-muted mt-1">Files will be appended after the current document</p>
           <input
             ref={inputRef}
             type="file"
@@ -137,15 +137,15 @@ export function MergeDialog() {
         {/* File list */}
         {files.length > 0 && (
           <div className="flex flex-col gap-1">
-            <p className="text-xs text-text-muted mb-1">{files.length} file{files.length > 1 ? 's' : ''} to append:</p>
+            <p className="text-sm text-text-muted mb-1">{files.length} file{files.length > 1 ? 's' : ''} to append:</p>
             {files.map((file, i) => (
               <div
                 key={`${file.name}|${file.size}|${i}`}
                 className="flex items-center gap-2 px-3 py-2 bg-surface-overlay rounded-lg"
               >
                 <FileText size={14} className="text-text-muted shrink-0" />
-                <span className="text-sm text-text-primary truncate flex-1">{file.name}</span>
-                <span className="text-xs text-text-muted shrink-0">{formatBytes(file.size)}</span>
+                <span className="text-base text-text-primary truncate flex-1">{file.name}</span>
+                <span className="text-sm text-text-muted shrink-0">{formatBytes(file.size)}</span>
                 <div className="flex items-center gap-0.5 shrink-0">
                   <button
                     onClick={() => moveUp(i)}

@@ -31,6 +31,22 @@ export function PDFViewer() {
   const [visiblePages, setVisiblePages] = useState<Set<number>>(
     () => new Set([0, 1, 2].filter((i) => i < pageCount))
   );
+  const [printMode, setPrintMode] = useState(false);
+
+  // Before printing, force all pages to render so nothing is blank.
+  useEffect(() => {
+    const onBefore = () => {
+      setPrintMode(true);
+      setVisiblePages(new Set(Array.from({ length: pageCount }, (_, i) => i)));
+    };
+    const onAfter = () => setPrintMode(false);
+    window.addEventListener('beforeprint', onBefore);
+    window.addEventListener('afterprint', onAfter);
+    return () => {
+      window.removeEventListener('beforeprint', onBefore);
+      window.removeEventListener('afterprint', onAfter);
+    };
+  }, [pageCount]);
 
   // Track viewer container dimensions for fit-to-width/page
   useEffect(() => {
@@ -130,7 +146,7 @@ export function PDFViewer() {
               data-page={pageIndex}
               className="relative"
             >
-              {visiblePages.has(pageIndex) ? (
+              {(printMode || visiblePages.has(pageIndex)) ? (
                 <PDFPage pageIndex={pageIndex} scale={zoom} />
               ) : (
                 // Placeholder: same size as the page so scrollbar stays accurate
